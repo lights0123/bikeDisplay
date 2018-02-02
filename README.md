@@ -1,5 +1,4 @@
-#bikeDisplay
-
+# bikeDisplay
 This is a project to add a smart controller to a standard bicycle, using an Atmel SAMD21 controller
 (known as Arduino Zero or Arduino M0). What it does:
 * Uses GPS for speed, heading (direction), and simple navigation
@@ -11,8 +10,7 @@ What it is not:
 * An anti-theft device (although it might work)
 * A controller for motorized bicycles
 
-##Building & Uploading
-
+## Building & Uploading
 This project uses [platformio](https://github.com/platformio/platformio-core) for automatic
 dependency management, building, and uploading. Follow the instructions outlined
 [here](http://docs.platformio.org/en/latest/installation.html) to install PlatformIO. You can

@@ -24,6 +24,7 @@
 #include <NMEAGPS.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 #include "FastLED.h"
+#include "freeRAM.h"
 //#include "EEPROMManager.h"
 
 NMEAGPS gps; // This parses the GPS characters
@@ -37,16 +38,12 @@ TBlendType currentBlending = LINEARBLEND;
 //CRGB leds[NUM_LEDS];
 Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
 #ifdef U8X8_HAVE_HW_SPI
-
 #include <SPI.h>
-
 #endif
 #ifdef U8X8_HAVE_HW_I2C
-
 #include <Wire.h>
-
 #endif
-#define gps_port Serial1
+
 #define Serial SerialUSB
 //#define CAPTOUCH
 #define KEYPAD
@@ -81,25 +78,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 Adafruit_FreeTouch touchController[5];
 int touchCal[5];
 #endif
-#ifdef __arm__
-// should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char *sbrk(int incr);
-#else  // __ARM__
-extern char *__brkval;
-#endif  // __arm__
 
-int freeRam() {
-	char top;
-#ifdef __arm__
-	return &top - reinterpret_cast<char *>(sbrk(0));
-#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-	return &top - __brkval;
-#else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
-}
-
-int freeSRAM;
 unsigned long millStart = 0;
 unsigned long millLast = 0;
 unsigned long millEnd;
@@ -184,6 +163,7 @@ void loop() {
 	t = freeRam();
 	millLast = millEnd - millStart;
 	millStart = millis();
+	t = freeRAM();
 	switch (getButtons()) {
 		case leftPin:
 			break;

@@ -16,20 +16,31 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//#define SERIAL_BUFFER_SIZE 1536
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include "UIManager.h"
 #include "Keypad.h"
+#define NMEAGPS_INTERRUPT_PROCESSING
+#include <NMEAGPS_cfg.h>
+#define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
 #include <NMEAGPS.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 #include "FastLED.h"
 #include "freeRAM.h"
+#include "wiring_private.h"
 //#include "EEPROMManager.h"
 
 NMEAGPS gps; // This parses the GPS characters
 gps_fix fix; // This holds on to the latest values
 
+Uart GPSPort (&sercom2, 3, 4, SERCOM_RX_PAD_1, UART_TX_PAD_0);
+void SERCOM2_Handler()
+{
+	if (sercom2.availableDataUART()) {
+		gps.handle(sercom2.readDataUART());
+	}
+	GPSPort.IrqHandler();
+}
 
 CRGBPalette16 currentPalette;
 TBlendType currentBlending = LINEARBLEND;
@@ -91,8 +102,9 @@ uint8_t readCapacitivePin(int pinToMeasure);
 float speedMPH = 0;
 
 void setup() {
-	Serial.begin(115200);
-	gps_port.begin(115200);
+	GPSPort.begin(115200);
+	pinPeripheral(3, PIO_SERCOM_ALT);
+	pinPeripheral(4, PIO_SERCOM_ALT);
 	u8g2.begin();
 	u8g2.setFontMode(0);
 	//LEDS.addLeds<WS2812B, NEOPIXEL_DATA_PIN, GRB>(leds, NUM_LEDS);
@@ -158,9 +170,27 @@ buttons lastButton;
 bool wasTouched = false;
 
 void loop() {
-	//while(Serial.available()) gps_port.write(Serial.read());
-	//while(gps_port.available()) Serial.write(gps_port.read());
-	t = freeRam();
+//	while(Serial.available()) GPSPort.write(Serial.read());
+//	while(GPSPort.available()) Serial.write(GPSPort.read());
+	while (gps.available()) {
+		fix = gps.read();
+		Serial.print(F("Location: "));
+		if (fix.valid.location) {
+			Serial.print(fix.latitude(), 6);
+			Serial.print(',');
+			Serial.print(fix.longitude(), 6);
+		}
+		Serial.print(F(", Altitude: "));
+		if (fix.valid.altitude)
+			Serial.print(fix.altitude());
+		Serial.print(F(", Speed: "));
+		if (fix.valid.speed) {
+			speedMPH = fix.speed_mph();
+			Serial.print(speedMPH);
+		}
+		Serial.println();
+	}
+
 	millLast = millEnd - millStart;
 	millStart = millis();
 	t = freeRAM();
@@ -198,24 +228,6 @@ void loop() {
 			break;
 	}
 	//ui.show();
-	while (gps.available(gps_port)) {
-		fix = gps.read();
-		Serial.print(F("Location: "));
-		if (fix.valid.location) {
-			Serial.print(fix.latitude(), 6);
-			Serial.print(',');
-			Serial.print(fix.longitude(), 6);
-		}
-		Serial.print(F(", Altitude: "));
-		if (fix.valid.altitude)
-			Serial.print(fix.altitude());
-		Serial.print(F(", Speed: "));
-		if (fix.valid.speed) {
-			speedMPH = fix.speed_mph();
-			Serial.print(speedMPH);
-		}
-		Serial.println();
-	}
 	static uint8_t startIndex = 0;
 	static unsigned long oldMil = millis();
 	startIndex += (millis() - oldMil) / 12; /* motion speed */

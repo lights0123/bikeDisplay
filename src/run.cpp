@@ -19,7 +19,6 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include "UIManager.h"
-#include <Keypad.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 #include <FastLED.h>
 #include "freeRAM.h"
@@ -82,9 +81,6 @@ EffectManager e(&strip, NUM_LEDS);
 #endif
 
 #define Serial SerialUSB
-//#define CAPTOUCH
-//#define KEYPAD
-#define CAPTOUCH_THRESHOLD 3
 #define BUTTON_LONGPRESS 800
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 UIManager ui(&u8g2);
@@ -97,24 +93,6 @@ enum buttons {
 	downPin = 2,
 	selectPin = 1
 };
-#ifdef KEYPAD
-const byte ROWS = 4; //four rows
-const byte COLS = 3; //three columns
-char keys[ROWS][COLS] = {
-		{'1', '2', '3'},
-		{'4', '5', '6'},
-		{'7', '8', '9'},
-		{'*', '0', '#'}
-};
-byte rowPins[ROWS] = {7, 8, 9, 3}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {4, 5, 6}; //connect to the column pinouts of the keypad
-
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
-#endif
-#if defined(CAPTOUCH) && defined(ARDUINO_ARCH_SAMD)
-Adafruit_FreeTouch touchController[5];
-int touchCal[5];
-#endif
 
 unsigned long millStart = 0;
 unsigned long millLast = 0;
@@ -122,8 +100,6 @@ unsigned long millEnd;
 int t;
 
 buttons getButtons();
-
-uint8_t readCapacitivePin(int pinToMeasure);
 
 float speedMPH = 0;
 
@@ -142,32 +118,13 @@ void setup() {
 	strip.begin();
 	strip.setBrightness(84);
 	e.setEffect(EffectManager::blinker);
-#ifndef CAPTOUCH
+
 	pinMode(leftPin, INPUT_PULLUP);
 	pinMode(rightPin, INPUT_PULLUP);
 	pinMode(upPin, INPUT_PULLUP);
 	pinMode(downPin, INPUT_PULLUP);
 	pinMode(selectPin, INPUT_PULLUP);
-#elif defined(ARDUINO_ARCH_SAMD)
-	touchController[0]=Adafruit_FreeTouch(leftPin, OVERSAMPLE_4, RESISTOR_0, FREQ_MODE_NONE);
-	touchController[1]=Adafruit_FreeTouch(rightPin, OVERSAMPLE_4, RESISTOR_0, FREQ_MODE_NONE);
-	touchController[2]=Adafruit_FreeTouch(upPin, OVERSAMPLE_4, RESISTOR_0, FREQ_MODE_NONE);
-	touchController[3]=Adafruit_FreeTouch(downPin, OVERSAMPLE_4, RESISTOR_0, FREQ_MODE_NONE);
-	touchController[4]=Adafruit_FreeTouch(selectPin, OVERSAMPLE_4, RESISTOR_0, FREQ_MODE_NONE);
-	if (!touchController[0].begin())
-	{Serial.print("Failed to begin qt on pin ");Serial.println(leftPin);}
-	if (!touchController[1].begin())
-	{Serial.print("Failed to begin qt on pin ");Serial.println(rightPin);}
-	if (!touchController[2].begin())
-	{Serial.print("Failed to begin qt on pin ");Serial.println(upPin);}
-	if (!touchController[3].begin())
-	{Serial.print("Failed to begin qt on pin ");Serial.println(downPin);}
-	if (!touchController[4].begin())
-	{Serial.print("Failed to begin qt on pin ");Serial.println(selectPin);}
-	for(int i = 0; i < 5; i++){
-		touchCal[i] = touchController[i].measure()+50;
-	}
-#endif
+
 	ui.setTitle("Locations");
 	ui.uiSelector(5, [](int pos) {
 		switch (pos) {
@@ -250,122 +207,11 @@ void loop() {
 	e.show();
 }
 
-#ifdef ARDUINO_ARCH_AVR
-uint8_t readCapacitivePin(int pinToMeasure) {
-	// Variables used to translate from Arduino to AVR pin naming
-
-	volatile uint8_t *port;
-	volatile uint8_t *ddr;
-	volatile uint8_t *pin;
-
-	// Here we translate the input pin number from
-	//  Arduino pin number to the AVR PORT, PIN, DDR,
-	//  and which bit of those registers we care about.
-
-	byte bitmask;
-
-	port = portOutputRegister(digitalPinToPort(pinToMeasure));
-	ddr = portModeRegister(digitalPinToPort(pinToMeasure));
-	bitmask = digitalPinToBitMask(pinToMeasure);
-	pin = portInputRegister(digitalPinToPort(pinToMeasure));
-
-	// Discharge the pin first by setting it low and output
-
-	*port &= ~(bitmask);
-	*ddr |= bitmask;
-	delay(1);
-	uint8_t SREG_old = SREG; //back up the AVR Status Register
-
-	// Prevent the timer IRQ from disturbing our measurement
-
-	noInterrupts();
-
-	// Make the pin an input with the internal pull-up on
-
-	*ddr &= ~(bitmask);
-	*port |= bitmask;
-
-	// Now see how long the pin to get pulled up. This manual unrolling of the loop
-	// decreases the number of hardware cycles between each read of the pin,
-	// thus increasing sensitivity.
-
-	uint8_t cycles = 17;
-	if (*pin & bitmask) { cycles = 0; }
-	else if (*pin & bitmask) { cycles = 1; }
-	else if (*pin & bitmask) { cycles = 2; }
-	else if (*pin & bitmask) { cycles = 3; }
-	else if (*pin & bitmask) { cycles = 4; }
-	else if (*pin & bitmask) { cycles = 5; }
-	else if (*pin & bitmask) { cycles = 6; }
-	else if (*pin & bitmask) { cycles = 7; }
-	else if (*pin & bitmask) { cycles = 8; }
-	else if (*pin & bitmask) { cycles = 9; }
-	else if (*pin & bitmask) { cycles = 10; }
-	else if (*pin & bitmask) { cycles = 11; }
-	else if (*pin & bitmask) { cycles = 12; }
-	else if (*pin & bitmask) { cycles = 13; }
-	else if (*pin & bitmask) { cycles = 14; }
-	else if (*pin & bitmask) { cycles = 15; }
-	else if (*pin & bitmask) { cycles = 16; }
-
-	// End of timing-critical section; turn interrupts back on if they were on before, or leave them off if they were off before
-
-	SREG = SREG_old;
-
-	// Discharge the pin again by setting it low and output
-	//  It's important to leave the pins low if you want to
-	//  be able to touch more than 1 sensor at a time - if
-	//  the sensor is left pulled high, when you touch
-	//  two sensors, your body will transfer the charge between
-	//  sensors.
-	*port &= ~(bitmask);
-	*ddr |= bitmask;
-
-	return cycles;
-}
-#endif
-
 buttons getButtons() {
-#ifdef CAPTOUCH
-#ifdef ARDUINO_ARCH_SAMD
-	if (touchController[0].measure() > touchCal[0]) return leftPin;
-	if (touchController[1].measure() > touchCal[1]) return rightPin;
-	if (touchController[2].measure() > touchCal[2]) return upPin;
-	if (touchController[3].measure() > touchCal[3]) return downPin;
-	if (touchController[4].measure() > touchCal[4]) return selectPin;
-	return noButtons;
-#else
-	if (readCapacitivePin(leftPin) > CAPTOUCH_THRESHOLD) return leftPin;
-	if (readCapacitivePin(rightPin) > CAPTOUCH_THRESHOLD) return rightPin;
-	if (readCapacitivePin(upPin) > CAPTOUCH_THRESHOLD) return upPin;
-	if (readCapacitivePin(downPin) > CAPTOUCH_THRESHOLD) return downPin;
-	if (readCapacitivePin(selectPin) > CAPTOUCH_THRESHOLD) return selectPin;
-	return noButtons;
-#endif
-#elif defined(KEYPAD)
-	keypad.getKeys();
-	if (keypad.key[0].kstate == PRESSED || keypad.key[0].kstate == HOLD) {
-		switch (keypad.key[0].kchar) {
-			case '4':
-				return leftPin;
-			case '5':
-				return selectPin;
-			case '6':
-				return rightPin;
-			case '2':
-				return upPin;
-			case '8':
-				return downPin;
-			default:
-				return noButtons;
-		}
-	}
-#else
 	if (digitalRead(leftPin) == LOW) return leftPin;
 	if (digitalRead(rightPin) == LOW) return rightPin;
 	if (digitalRead(upPin) == LOW) return upPin;
 	if (digitalRead(downPin) == LOW) return downPin;
 	if (digitalRead(selectPin) == LOW) return selectPin;
 	return noButtons;
-#endif
 }

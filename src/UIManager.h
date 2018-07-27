@@ -66,6 +66,41 @@ public:
 		String (*cb)(int);
 	};
 
+	class UISlider : public UIType {
+	public:
+		UISlider(UIManager *manager, String name, int value) : manager(manager), name(name), value(value),
+		                                                       display(manager->display), cbChange([](int) {}),
+		                                                       cbSave([](int) {}) {};
+
+		UISlider &setBounds(int newMin, int newMax);
+
+		UISlider &setValue(int newValue);
+
+		UISlider &setName(String newName);
+
+		UISlider &onChange(void (*cbChangeNew)(int));
+
+		UISlider &onSave(void (*cbSaveNew)(int));
+
+		void show() override;
+
+		void increase(int amount = 1);
+
+		void decrease(int amount = 1);
+
+	private:
+		UIManager *manager;
+		U8G2 *display;
+		int min = 0;
+		int max = 100;
+		int value = 0;
+		String name;
+
+		void (*cbChange)(int);
+
+		void (*cbSave)(int);
+	};
+
 private:
 	U8G2 *display;
 	UIType *currentDisplay;

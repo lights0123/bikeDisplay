@@ -79,3 +79,48 @@ void UIManager::UISelector::moveDown() {
 		if (topItem <= currentPosition - listEntries) topItem++;
 	}
 }
+
+UIManager::UISlider &UIManager::UISlider::setBounds(int newMin, int newMax) {
+	min = newMin;
+	max = newMax;
+	return *this;
+}
+
+UIManager::UISlider &UIManager::UISlider::setValue(int newValue) {
+	value = newValue;
+	return *this;
+}
+
+UIManager::UISlider &UIManager::UISlider::setName(String newName) {
+	name = newName;
+	return *this;
+}
+
+
+UIManager::UISlider &UIManager::UISlider::onChange(void (*cbChangeNew)(int)) {
+	cbChange = cbChangeNew;
+	return *this;
+}
+
+UIManager::UISlider &UIManager::UISlider::onSave(void (*cbSaveNew)(int)) {
+	cbSave = cbSaveNew;
+	return *this;
+}
+
+void UIManager::UISlider::show() {
+
+}
+
+void UIManager::UISlider::increase(int amount) {
+	if (value + amount <= max) {
+		value += amount;
+		cbChange(value);
+	}
+}
+
+void UIManager::UISlider::decrease(int amount) {
+	if (value - amount >= min) {
+		value -= amount;
+		cbChange(value);
+	}
+}

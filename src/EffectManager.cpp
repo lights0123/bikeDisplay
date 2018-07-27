@@ -19,7 +19,7 @@
 #include "EffectManager.h"
 
 void EffectManager::show() {
-	effectFunction(leds, numLEDs, 0);
+	effectFunction(leds, numLEDs, offset);
 	leds->show();
 }
 

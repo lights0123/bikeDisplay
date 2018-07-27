@@ -23,7 +23,9 @@
 
 class EffectManager {
 public:
-	EffectManager(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs) : leds(leds), numLEDs(numLEDs) {
+	EffectManager(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0) : leds(leds),
+	                                                                                        numLEDs(numLEDs),
+	                                                                                        offset(offset) {
 		// Prevent calling an undefined pointer if setEffect is not called
 		effectFunction = [](Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t) {};
 	};
@@ -41,7 +43,8 @@ public:
 private:
 	Adafruit_NeoPixel_ZeroDMA *leds;
 	uint16_t numLEDs;
-public:
+	uint16_t offset;
+
 	void (*effectFunction)(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t);
 };
 

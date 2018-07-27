@@ -83,7 +83,7 @@ EffectManager e(&strip, NUM_LEDS);
 
 #define Serial SerialUSB
 //#define CAPTOUCH
-#define KEYPAD
+//#define KEYPAD
 #define CAPTOUCH_THRESHOLD 3
 #define BUTTON_LONGPRESS 800
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
@@ -91,11 +91,11 @@ UIManager ui(&u8g2);
 //EEPROManager e;
 enum buttons {
 	noButtons = -1,
-	leftPin = A0,
-	rightPin = A1,
-	upPin = A2,
-	downPin = 8,
-	selectPin = 9
+	leftPin = 5,
+	rightPin = 6,
+	upPin = 0,
+	downPin = 2,
+	selectPin = 1
 };
 #ifdef KEYPAD
 const byte ROWS = 4; //four rows

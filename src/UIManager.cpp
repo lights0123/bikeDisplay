@@ -19,9 +19,10 @@
 #include <Arduino.h>
 #include "UIManager.h"
 
-#define listFont u8g2_font_7x14_tr
-#define listFontHeight 10
-#define listEntries ((display->getDisplayHeight() - 16) / (listFontHeight + 2))
+#define titleHeight 16
+#define UIFont u8g2_font_7x14_tr
+#define UIFontHeight 10
+#define listEntries ((display->getDisplayHeight() - titleHeight) / (UIFontHeight + 2))
 
 void UIManager::setTitle(String titleIn) {
 	title = titleIn;
@@ -31,9 +32,10 @@ void UIManager::show() {
 	display->clearBuffer();
 	display->setFont(u8g2_font_crox3h_tr);
 	int width = display->getUTF8Width(title.c_str());
-	display->setCursor((display->getDisplayWidth() - width) / 2, 16);
+	display->setCursor((display->getDisplayWidth() - width) / 2, titleHeight);
 	display->setDrawColor(1);
 	display->print(title);
+	display->setFont(UIFont);
 	currentDisplay->show();
 	display->sendBuffer();
 }
@@ -47,15 +49,14 @@ void UIManager::UISelector::show() {
 	float progress = (float) currentPosition / (float) (positions - 1);
 	float unitLength = (float) 1 / (float) positions;
 	progressBarLength = (display->getDisplayHeight() - 17) / 2.4;
-	progressBarStart = progress * (display->getDisplayHeight() - 16 - progressBarLength);
+	progressBarStart = progress * (display->getDisplayHeight() - titleHeight - progressBarLength);
 
-	display->setFont(listFont);
 	for (int i = topItem; i < positions && i < topItem + listEntries; i++) {
-		int top = 16 + (listFontHeight + 2) * ((i - topItem) + 1) - 1;
+		int top = titleHeight + (UIFontHeight + 2) * ((i - topItem) + 1) - 1;
 		display->setDrawColor(1);
 		if (i == currentPosition) {
-			display->drawBox(0, top - 1 - listFontHeight, display->getDisplayWidth() - 3,
-			                 listFontHeight + 2);
+			display->drawBox(0, top - 1 - UIFontHeight, display->getDisplayWidth() - 3,
+			                 UIFontHeight + 2);
 			display->setDrawColor(0);
 		}
 		display->setCursor(0, top);
@@ -96,6 +97,11 @@ UIManager::UISlider &UIManager::UISlider::setName(String newName) {
 	return *this;
 }
 
+UIManager::UISlider &UIManager::UISlider::setSuffix(String newSuffix) {
+	suffix = newSuffix;
+	return *this;
+}
+
 
 UIManager::UISlider &UIManager::UISlider::onChange(void (*cbChangeNew)(int)) {
 	cbChange = cbChangeNew;
@@ -108,7 +114,34 @@ UIManager::UISlider &UIManager::UISlider::onSave(void (*cbSaveNew)(int)) {
 }
 
 void UIManager::UISlider::show() {
+	const double screenPercentage = 0.8;
+	const int displayWidth = display->getDisplayWidth();
+	const int displayHeight = display->getDisplayHeight();
 
+	// Divide by 2, round, and multiply by 2 so that the output is an even number
+	const int barWidth = round(displayWidth * screenPercentage / 2) * 2;
+	const int barHeight = 6;
+	const int barDistanceFromTop = displayHeight / 2 - barHeight / 2 + titleHeight / 2;
+	const int barDistanceFromLeft = displayWidth / 2 - barWidth / 2;
+	const int valueWidth = (value - min) / (double) (max - min) * barWidth;
+
+	const int nameWidth = display->getUTF8Width(name.c_str());
+	const int nameDistanceFromTop = barDistanceFromTop / 2 + titleHeight / 2 + UIFontHeight / 2;
+	
+	String valueString = String(value) + suffix;
+	
+	const int valueStringWidth = display->getUTF8Width(valueString.c_str());
+	const int valueStringDistanceFromTop = (barDistanceFromTop + barHeight + UIFontHeight + displayHeight) / 2;
+
+	display->setCursor((displayWidth - nameWidth) / 2, nameDistanceFromTop);
+	display->print(name);
+
+	display->drawFrame(barDistanceFromLeft, barDistanceFromTop, barWidth, barHeight);
+
+	display->drawBox(barDistanceFromLeft, barDistanceFromTop, valueWidth, barHeight);
+
+	display->setCursor((displayWidth - valueStringWidth) / 2, valueStringDistanceFromTop);
+	display->print(valueString);
 }
 
 void UIManager::UISlider::increase(int amount) {

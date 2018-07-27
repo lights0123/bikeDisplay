@@ -106,7 +106,7 @@ float speedMPH = 0;
 unsigned long startTouch = 0;
 buttons lastButton;
 bool wasTouched = false;
-UIManager::UISlider sel(&ui, "test", 0);
+UIManager::UISlider sel(&ui, "test", 1);
 
 void setup() {
 	GPSPort.begin(115200);
@@ -126,9 +126,12 @@ void setup() {
 	pinMode(downPin, INPUT_PULLUP);
 	pinMode(selectPin, INPUT_PULLUP);
 
-	sel.onChange([](int val) {
-		SerialUSB.println(val);
-	});
+	sel
+			.setBounds(1, 10)
+			.setSuffix(" mL/s")
+			.onChange([](int val) {
+				SerialUSB.println(val);
+			});
 	ui.setTitle("Locations");
 	ui.setType(&sel);
 	ui.show();

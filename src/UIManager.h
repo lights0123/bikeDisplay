@@ -72,14 +72,32 @@ public:
 		                                                       display(manager->display), cbChange([](int) {}),
 		                                                       cbSave([](int) {}) {};
 
+		/**
+		 * Sets the boundaries for the slider.
+		 * @param newMin New minimum to set
+		 * @param newMax New maximum to set
+		 * @return itself, for a fluent-style interface
+		 */
 		UISlider &setBounds(int newMin, int newMax);
 
 		UISlider &setValue(int newValue);
 
 		UISlider &setName(String newName);
 
+		UISlider &setSuffix(String newSuffix);
+
+		/**
+		 * Sets the callback for when the value is changed in real-time
+		 * @param cbChangeNew New callback that accepts an integer
+		 * @return itself, for a fluent-style interface
+		 */
 		UISlider &onChange(void (*cbChangeNew)(int));
 
+		/**
+		 * Sets the callback for when the value is saved
+		 * @param cbChangeNew New callback that accepts an integer
+		 * @return itself, for a fluent-style interface
+		 */
 		UISlider &onSave(void (*cbSaveNew)(int));
 
 		void show() override;
@@ -95,6 +113,7 @@ public:
 		int max = 100;
 		int value = 0;
 		String name;
+		String suffix = "%";
 
 		void (*cbChange)(int);
 

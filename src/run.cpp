@@ -19,25 +19,46 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include "UIManager.h"
-#include "Keypad.h"
-#define NMEAGPS_INTERRUPT_PROCESSING
-#include <NMEAGPS_cfg.h>
-#define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
-#include <NMEAGPS.h>
+#include <Keypad.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
-#include "FastLED.h"
+#include <FastLED.h>
 #include "freeRAM.h"
 #include "wiring_private.h"
+#include "EffectManager.h"
+
+#define NMEAGPS_INTERRUPT_PROCESSING
+
+#include <NMEAGPS_cfg.h>
+
+#define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
+
+#include <NMEAGPS.h>
 //#include "EEPROMManager.h"
 
 NMEAGPS gps; // This parses the GPS characters
-gps_fix fix; // This holds on to the latest values
+gps_fix fix;
+gps_fix fixStore;
+volatile bool hasFix = false;
 
-Uart GPSPort (&sercom2, 3, 4, SERCOM_RX_PAD_1, UART_TX_PAD_0);
-void SERCOM2_Handler()
-{
+Uart GPSPort(&sercom2, 3, 4, SERCOM_RX_PAD_1, UART_TX_PAD_0);
+
+void SERCOM2_Handler() {
+	// If data is available for reading...
 	if (sercom2.availableDataUART()) {
-		gps.handle(sercom2.readDataUART());
+		// Read it and decode. If finished decoding, then...
+		if (gps.decode(sercom2.readDataUART()) == NMEAGPS::DECODE_COMPLETED) {
+			// Add the received sentence to the GPS data
+			fixStore |= gps.fix();
+			// If it's the last sentence in the block, then
+			if (gps.nmeaMessage == LAST_SENTENCE_IN_INTERVAL) {
+				// Copy the internal data to what's accessed externally
+				fix = fixStore;
+				// And reset the internal data
+				fixStore.init();
+				// Mark the data as ready
+				hasFix = true;
+			}
+		}
 	}
 	GPSPort.IrqHandler();
 }
@@ -48,11 +69,16 @@ TBlendType currentBlending = LINEARBLEND;
 #define NEOPIXEL_DATA_PIN 11
 //CRGB leds[NUM_LEDS];
 Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
+EffectManager e(&strip, NUM_LEDS);
 #ifdef U8X8_HAVE_HW_SPI
+
 #include <SPI.h>
+
 #endif
 #ifdef U8X8_HAVE_HW_I2C
+
 #include <Wire.h>
+
 #endif
 
 #define Serial SerialUSB
@@ -101,6 +127,10 @@ uint8_t readCapacitivePin(int pinToMeasure);
 
 float speedMPH = 0;
 
+unsigned long startTouch = 0;
+buttons lastButton;
+bool wasTouched = false;
+
 void setup() {
 	GPSPort.begin(115200);
 	pinPeripheral(3, PIO_SERCOM_ALT);
@@ -111,14 +141,7 @@ void setup() {
 	//LEDS.setBrightness(84);
 	strip.begin();
 	strip.setBrightness(84);
-	CRGB yellow = CHSV(HUE_YELLOW, 255, 255);
-	CRGB black = CRGB::Black;
-
-	currentPalette = CRGBPalette16(
-			yellow, yellow, black, black,
-			yellow, yellow, black, black,
-			yellow, yellow, black, black,
-			yellow, yellow, black, black);
+	e.setEffect(EffectManager::blinker);
 #ifndef CAPTOUCH
 	pinMode(leftPin, INPUT_PULLUP);
 	pinMode(rightPin, INPUT_PULLUP);
@@ -155,7 +178,7 @@ void setup() {
 			case 2:
 				return String(String("millis: ") + String(millLast));
 			case 3:
-				return String("Filler");
+				return String(millis() - startTouch);
 			case 4:
 				return String("Filler 2");
 			default:
@@ -165,15 +188,10 @@ void setup() {
 	ui.show();
 }
 
-unsigned long startTouch;
-buttons lastButton;
-bool wasTouched = false;
-
 void loop() {
 //	while(Serial.available()) GPSPort.write(Serial.read());
 //	while(GPSPort.available()) Serial.write(GPSPort.read());
-	while (gps.available()) {
-		fix = gps.read();
+	if (hasFix) {
 		Serial.print(F("Location: "));
 		if (fix.valid.location) {
 			Serial.print(fix.latitude(), 6);
@@ -189,6 +207,7 @@ void loop() {
 			Serial.print(speedMPH);
 		}
 		Serial.println();
+		hasFix = false;
 	}
 
 	millLast = millEnd - millStart;
@@ -228,22 +247,7 @@ void loop() {
 			break;
 	}
 	//ui.show();
-	static uint8_t startIndex = 0;
-	static unsigned long oldMil = millis();
-	startIndex += (millis() - oldMil) / 12; /* motion speed */
-	if ((millis() - oldMil) / 12 >= 1) {
-		uint8_t colorIndex = startIndex;
-		uint8_t brightness = 255;
-		for (int i = 0; i < NUM_LEDS; i++) {
-			CRGB color = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
-			colorIndex += 3;
-			//leds[i]=color;
-			strip.setPixelColor(i, color.r, color.g, color.b);
-		}
-		oldMil = millis();
-	}
-	strip.show();
-	millEnd = millis();
+	e.show();
 }
 
 #ifdef ARDUINO_ARCH_AVR

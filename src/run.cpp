@@ -106,6 +106,22 @@ float speedMPH = 0;
 unsigned long startTouch = 0;
 buttons lastButton;
 bool wasTouched = false;
+UIManager::UISelector sel(&ui, 5, [](int pos) {
+	switch (pos) {
+		case 0:
+			return String(String("Speed: ") + String(speedMPH) + String(" MPH"));
+		case 1:
+			return String(String("Free RAM: ") + String(t));
+		case 2:
+			return String(String("millis: ") + String(millLast));
+		case 3:
+			return String(millis() - startTouch);
+		case 4:
+			return String("Filler 2");
+		default:
+			return String("Error");
+	}
+});
 
 void setup() {
 	GPSPort.begin(115200);
@@ -126,22 +142,7 @@ void setup() {
 	pinMode(selectPin, INPUT_PULLUP);
 
 	ui.setTitle("Locations");
-	ui.uiSelector(5, [](int pos) {
-		switch (pos) {
-			case 0:
-				return String(String("Speed: ") + String(speedMPH) + String(" MPH"));
-			case 1:
-				return String(String("Free RAM: ") + String(t));
-			case 2:
-				return String(String("millis: ") + String(millLast));
-			case 3:
-				return String(millis() - startTouch);
-			case 4:
-				return String("Filler 2");
-			default:
-				return String("Error");
-		}
-	});
+	ui.setType(&sel);
 	ui.show();
 }
 
@@ -166,7 +167,6 @@ void loop() {
 		Serial.println();
 		hasFix = false;
 	}
-
 	millLast = millEnd - millStart;
 	millStart = millis();
 	t = freeRAM();
@@ -183,7 +183,7 @@ void loop() {
 				wasTouched = true;
 				startTouch = millis();
 			}
-			ui.moveUp();
+			sel.moveUp();
 			ui.show();
 			break;
 		case downPin:
@@ -194,7 +194,7 @@ void loop() {
 				wasTouched = true;
 				startTouch = millis();
 			}
-			ui.moveDown();
+			sel.moveDown();
 			ui.show();
 			break;
 		case selectPin:
@@ -203,7 +203,7 @@ void loop() {
 			wasTouched = false;
 			break;
 	}
-	//ui.show();
+	ui.show();
 	e.show();
 }
 

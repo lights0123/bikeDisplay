@@ -16,35 +16,58 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef BIKEDISPLAY_UIMANAGER_H
-#define BIKEDISPLAY_UIMANAGER_H
+#pragma once
 
 #include <U8g2lib.h>
 
-enum UI_TYPES{
-    UI_SELECTION,
-    UI_MAIN
+enum UI_TYPES {
+	UI_SELECTION,
+	UI_MAIN
 };
-class UIManager{
+
+class UIManager {
 public:
-    explicit UIManager(U8G2 *dispIn){display=dispIn;}
-    void setTitle(String titleIn);
 
-    void show();
+	class UIType {
+	public:
+		UIType() = default;
 
-    void uiSelector(int numPos, String (*pFunction)(int));
+		virtual void prepareShow() {};
 
-    void moveUp();
+		virtual void show() {};
+	};
 
-    void moveDown();
+	explicit UIManager(U8G2 *display) : display(display) {}
+
+	void setTitle(String titleIn);
+
+	void setType(UIType *type);
+
+	void show();
+
+	class UISelector : public UIType {
+	public:
+		UISelector(UIManager *manager, int positions, String (*cb)(int)) : manager(manager), positions(positions),
+		                                                                   cb(cb), display(manager->display) {};
+
+		void show() override;
+
+		void moveUp();
+
+		void moveDown();
+
+	private:
+		UIManager *manager;
+		U8G2 *display;
+		int positions;
+		int currentPosition = 0;
+		int topItem = 0;
+
+		String (*cb)(int);
+	};
 
 private:
-    U8G2 *display;
-    String title;
-    int selectionCount;
-    String (*cb)(int);
-    int selectionNum;
-    int topItem;
-    UI_TYPES uiType = UI_MAIN;
+	U8G2 *display;
+	UIType *currentDisplay;
+	String title;
 };
-#endif //BIKEDISPLAY_UIMANAGER_H

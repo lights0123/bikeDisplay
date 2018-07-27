@@ -28,80 +28,54 @@ void UIManager::setTitle(String titleIn) {
 }
 
 void UIManager::show() {
-	int progressBarStart = 0, progressBarLength = 0;
-	switch (uiType) {
-		case UI_SELECTION: {
-			float progress = (float) selectionNum / (float) (selectionCount - 1);
-			float unitLength = (float) 1 / (float) selectionCount;
-			progressBarLength = (display->getDisplayHeight() - 17) / 2.4;
-			progressBarStart = progress * (display->getDisplayHeight() - 16 - progressBarLength);
-			break;
-		}
-		case UI_MAIN:
-			break;
-	}
 	display->clearBuffer();
-	{
-		//Serial.println("Page");
-		display->setFont(u8g2_font_crox3h_tr);
-		int width = display->getUTF8Width(title.c_str());
-		display->setCursor((display->getDisplayWidth() - width) / 2, 16);
-		display->setDrawColor(1);
-		display->print(title);
-		switch (uiType) {
-			case UI_SELECTION: {
-				display->setFont(listFont);
-				for (int i = topItem; i < selectionCount && i < topItem + listEntries; i++) {
-					int top = 16 + (listFontHeight + 2) * ((i - topItem) + 1) - 1;
-					display->setDrawColor(1);
-					if (i == selectionNum) {
-						display->drawBox(0, top - 1 - listFontHeight, display->getDisplayWidth() - 3,
-										 listFontHeight + 2);
-						display->setDrawColor(0);
-					}
-					display->setCursor(0, top);
-					display->print(cb(i));
-				}
-				/*display->setDrawColor(1);
-				display->drawBox(display->getDisplayWidth() - 3, 16,
-								 3, display->getDisplayHeight() - 16);
-				display->setDrawColor(0);
-				display->drawPixel(display->getDisplayWidth() - 3, 16);
-				display->drawPixel(display->getDisplayWidth() - 1, 16);
-				display->drawPixel(display->getDisplayWidth() - 3, display->getDisplayHeight() - 1);
-				display->drawPixel(display->getDisplayWidth() - 1, display->getDisplayHeight() - 1);
-				display->drawBox(display->getDisplayWidth() - 2, 17,
-								 1, display->getDisplayHeight() - 18);*/
-				display->setDrawColor(1);
-				display->drawBox(display->getDisplayWidth() - 3, progressBarStart + 16,
-								 3, progressBarLength);
-				break;
-			}
-			case UI_MAIN:
-				break;
-		}
-	}
+	display->setFont(u8g2_font_crox3h_tr);
+	int width = display->getUTF8Width(title.c_str());
+	display->setCursor((display->getDisplayWidth() - width) / 2, 16);
+	display->setDrawColor(1);
+	display->print(title);
+	currentDisplay->show();
 	display->sendBuffer();
 }
 
-void UIManager::uiSelector(int numPos, String (*pFunction)(int)) {
-	uiType = UI_SELECTION;
-	topItem = 0;
-	selectionCount = numPos;
-	selectionNum = 0;
-	cb = pFunction;
+void UIManager::setType(UIManager::UIType *type) {
+	currentDisplay = type;
 }
 
-void UIManager::moveDown() {
-	if (uiType == UI_SELECTION && selectionNum + 1 < selectionCount) {
-		selectionNum++;
-		if (topItem <= selectionNum - listEntries) topItem++;
+void UIManager::UISelector::show() {
+	int progressBarStart = 0, progressBarLength = 0;
+	float progress = (float) currentPosition / (float) (positions - 1);
+	float unitLength = (float) 1 / (float) positions;
+	progressBarLength = (display->getDisplayHeight() - 17) / 2.4;
+	progressBarStart = progress * (display->getDisplayHeight() - 16 - progressBarLength);
+
+	display->setFont(listFont);
+	for (int i = topItem; i < positions && i < topItem + listEntries; i++) {
+		int top = 16 + (listFontHeight + 2) * ((i - topItem) + 1) - 1;
+		display->setDrawColor(1);
+		if (i == currentPosition) {
+			display->drawBox(0, top - 1 - listFontHeight, display->getDisplayWidth() - 3,
+			                 listFontHeight + 2);
+			display->setDrawColor(0);
+		}
+		display->setCursor(0, top);
+		display->print(cb(i));
+	}
+	display->setDrawColor(1);
+	display->drawBox(display->getDisplayWidth() - 3, progressBarStart + 16,
+	                 3, progressBarLength);
+}
+
+void UIManager::UISelector::moveUp() {
+	if (currentPosition > 0) {
+		currentPosition--;
+		if (topItem > currentPosition) topItem--;
 	}
 }
 
-void UIManager::moveUp() {
-	if (uiType == UI_SELECTION && selectionNum > 0) {
-		selectionNum--;
-		if (topItem > selectionNum) topItem--;
+void UIManager::UISelector::moveDown() {
+	if (currentPosition + 1 < positions) {
+		currentPosition++;
+		if (topItem <= currentPosition - listEntries) topItem++;
 	}
 }

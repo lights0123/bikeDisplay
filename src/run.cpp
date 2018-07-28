@@ -18,12 +18,6 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include "UIManager.h"
-#include <Adafruit_NeoPixel_ZeroDMA.h>
-#include <FastLED.h>
-#include "freeRAM.h"
-#include "wiring_private.h"
-#include "EffectManager.h"
 
 #define NMEAGPS_INTERRUPT_PROCESSING
 
@@ -32,9 +26,16 @@
 #define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
 
 #include <NMEAGPS.h>
-//#include "EEPROMManager.h"
+#include "UIManager.h"
+#include <Adafruit_NeoPixel_ZeroDMA.h>
+#include <FastLED.h>
+#include "wiring_private.h"
+#include "freeRAM.h"
+#include "EffectManager.h"
+#include "ConfigurationManager.h"
+#include "TimeManager.h"
 
-NMEAGPS gps; // This parses the GPS characters
+NMEAGPS gps;
 gps_fix fix;
 gps_fix fixStore;
 volatile bool hasFix = false;
@@ -44,7 +45,7 @@ Uart GPSPort(&sercom2, 3, 4, SERCOM_RX_PAD_1, UART_TX_PAD_0);
 void SERCOM2_Handler() {
 	// If data is available for reading...
 	if (sercom2.availableDataUART()) {
-		// Read it and decode. If finished decoding, then...
+		// Read it and decode. If finished decoding a sentence, then...
 		if (gps.decode(sercom2.readDataUART()) == NMEAGPS::DECODE_COMPLETED) {
 			// Add the received sentence to the GPS data
 			fixStore |= gps.fix();
@@ -52,6 +53,9 @@ void SERCOM2_Handler() {
 			if (gps.nmeaMessage == LAST_SENTENCE_IN_INTERVAL) {
 				// Copy the internal data to what's accessed externally
 				fix = fixStore;
+				// If the time & date are correct from the GPS, update them
+				if (fix.valid.time && fix.valid.date) TimeManager::setTime(fix.dateTime);
+
 				// And reset the internal data
 				fixStore.init();
 				// Mark the data as ready
@@ -117,7 +121,7 @@ void setup() {
 	//LEDS.addLeds<WS2812B, NEOPIXEL_DATA_PIN, GRB>(leds, NUM_LEDS);
 	//LEDS.setBrightness(84);
 	strip.begin();
-	strip.setBrightness(84);
+	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
 	e.setEffect(EffectManager::blinker);
 
 	pinMode(leftPin, INPUT_PULLUP);
@@ -196,6 +200,7 @@ void loop() {
 	}
 	ui.show();
 	e.show();
+	if (ConfigurationManager::hasTime) Serial.println(TimeManager::formatTime());
 }
 
 buttons getButtons() {

@@ -80,12 +80,12 @@ namespace TimeManager {
 		if (ConfigurationManager::is24Hour) {
 			return String(hours()) + String(":") + String(minutes());
 		} else {
-			return String(String(hours12()) + String(":") + String(minutes()) + String(isAM() ? "AM" : "PM"));
+			return String(String(hours12()) + String(":") + String(minutes()) + String(isAM() ? " AM" : " PM"));
 		}
 	};
 
 	String formatTime() {
-		formatTime(timezone.toLocal(::now()));
+		return formatTime(timezone.toLocal(::now()));
 	};
 };
 

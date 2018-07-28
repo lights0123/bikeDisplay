@@ -47,8 +47,8 @@ public:
 
 	class UISelector : public UIType {
 	public:
-		UISelector(UIManager *manager, int positions, String (*cb)(int)) : manager(manager), positions(positions),
-		                                                                   cb(cb), display(manager->display) {};
+		UISelector(UIManager *manager, int positions, String (*cb)(int)) : manager(manager), display(manager->display),
+		                                                                   positions(positions), cb(cb) {};
 
 		void show() override;
 
@@ -68,9 +68,8 @@ public:
 
 	class UISlider : public UIType {
 	public:
-		UISlider(UIManager *manager, String name, int value) : manager(manager), name(name), value(value),
-		                                                       display(manager->display), cbChange([](int) {}),
-		                                                       cbSave([](int) {}) {};
+		UISlider(UIManager *manager, String name, int value) : manager(manager), display(manager->display),
+		                                                       value(value), name(name), cbChange([](int) {}) {};
 
 		/**
 		 * Sets the boundaries for the slider.
@@ -93,13 +92,6 @@ public:
 		 */
 		UISlider &onChange(void (*cbChangeNew)(int));
 
-		/**
-		 * Sets the callback for when the value is saved
-		 * @param cbChangeNew New callback that accepts an integer
-		 * @return itself, for a fluent-style interface
-		 */
-		UISlider &onSave(void (*cbSaveNew)(int));
-
 		void show() override;
 
 		void increase(int amount = 1);
@@ -117,7 +109,6 @@ public:
 
 		void (*cbChange)(int);
 
-		void (*cbSave)(int);
 	};
 
 private:

@@ -19,6 +19,7 @@
 
 #include "ConfigurationManager.h"
 
+uint8_t ConfigurationManager::LEDStripBrightness = 100;
 void ConfigurationManager::save() {
 
 }

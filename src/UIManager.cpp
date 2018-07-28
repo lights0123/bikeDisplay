@@ -108,11 +108,6 @@ UIManager::UISlider &UIManager::UISlider::onChange(void (*cbChangeNew)(int)) {
 	return *this;
 }
 
-UIManager::UISlider &UIManager::UISlider::onSave(void (*cbSaveNew)(int)) {
-	cbSave = cbSaveNew;
-	return *this;
-}
-
 void UIManager::UISlider::show() {
 	const double screenPercentage = 0.8;
 	const int displayWidth = display->getDisplayWidth();
@@ -127,9 +122,9 @@ void UIManager::UISlider::show() {
 
 	const int nameWidth = display->getUTF8Width(name.c_str());
 	const int nameDistanceFromTop = barDistanceFromTop / 2 + titleHeight / 2 + UIFontHeight / 2;
-	
+
 	String valueString = String(value) + suffix;
-	
+
 	const int valueStringWidth = display->getUTF8Width(valueString.c_str());
 	const int valueStringDistanceFromTop = (barDistanceFromTop + barHeight + UIFontHeight + displayHeight) / 2;
 
@@ -145,15 +140,13 @@ void UIManager::UISlider::show() {
 }
 
 void UIManager::UISlider::increase(int amount) {
-	if (value + amount <= max) {
-		value += amount;
-		cbChange(value);
-	}
+	int oldVal = value;
+	value = min(max, value + amount);
+	if (value != oldVal) cbChange(value);
 }
 
 void UIManager::UISlider::decrease(int amount) {
-	if (value - amount >= min) {
-		value -= amount;
-		cbChange(value);
-	}
+	int oldVal = value;
+	value = max(min, value - amount);
+	if (value != oldVal) cbChange(value);
 }

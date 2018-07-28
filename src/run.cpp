@@ -23,17 +23,21 @@
 
 #include <NMEAGPS_cfg.h>
 
+#undef LAST_SENTENCE_IN_INTERVAL
 #define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
 
 #include <NMEAGPS.h>
 #include "UIManager.h"
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 #include <FastLED.h>
+#include <SPI.h>
+#include <Wire.h>
 #include "wiring_private.h"
 #include "freeRAM.h"
 #include "EffectManager.h"
 #include "ConfigurationManager.h"
 #include "TimeManager.h"
+#include "UIMenu.h"
 
 NMEAGPS gps;
 gps_fix fix;
@@ -54,8 +58,8 @@ void SERCOM2_Handler() {
 				// Copy the internal data to what's accessed externally
 				fix = fixStore;
 				// If the time & date are correct from the GPS, update them
-				if (fix.valid.time && fix.valid.date) TimeManager::setTime(fix.dateTime);
-
+				// (fix.dateTime_cs is used to make sure that the clock is only updated once per second).
+				if (fix.valid.time && fix.valid.date && fix.dateTime_cs == 0) TimeManager::setTime(fix.dateTime);
 				// And reset the internal data
 				fixStore.init();
 				// Mark the data as ready
@@ -66,53 +70,19 @@ void SERCOM2_Handler() {
 	GPSPort.IrqHandler();
 }
 
-CRGBPalette16 currentPalette;
-TBlendType currentBlending = LINEARBLEND;
 #define NUM_LEDS 20
 #define NEOPIXEL_DATA_PIN 11
 //CRGB leds[NUM_LEDS];
 Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
 EffectManager e(&strip, NUM_LEDS);
-#ifdef U8X8_HAVE_HW_SPI
 
-#include <SPI.h>
-
-#endif
-#ifdef U8X8_HAVE_HW_I2C
-
-#include <Wire.h>
-
-#endif
-
-#define Serial SerialUSB
-#define BUTTON_LONGPRESS 800
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 UIManager ui(&u8g2);
-//EEPROManager e;
-enum buttons {
-	noButtons = -1,
-	leftPin = 5,
-	rightPin = 6,
-	upPin = 0,
-	downPin = 2,
-	selectPin = 1
-};
 
-unsigned long millStart = 0;
-unsigned long millLast = 0;
-unsigned long millEnd;
-int t;
-
-buttons getButtons();
-
-float speedMPH = 0;
-
-unsigned long startTouch = 0;
-buttons lastButton;
-bool wasTouched = false;
-UIManager::UISlider sel(&ui, "test", 1);
+LEDStripBriSetting l(&ui);
 
 void setup() {
+	while (!SerialUSB);
 	GPSPort.begin(115200);
 	pinPeripheral(3, PIO_SERCOM_ALT);
 	pinPeripheral(4, PIO_SERCOM_ALT);
@@ -123,91 +93,34 @@ void setup() {
 	strip.begin();
 	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
 	e.setEffect(EffectManager::blinker);
+	ButtonManager::init();
 
-	pinMode(leftPin, INPUT_PULLUP);
-	pinMode(rightPin, INPUT_PULLUP);
-	pinMode(upPin, INPUT_PULLUP);
-	pinMode(downPin, INPUT_PULLUP);
-	pinMode(selectPin, INPUT_PULLUP);
-
-	sel
-			.setBounds(1, 10)
-			.setSuffix(" mL/s")
-			.onChange([](int val) {
-				SerialUSB.println(val);
-			});
 	ui.setTitle("Locations");
-	ui.setType(&sel);
+	l.enter([](){});
 	ui.show();
 }
 
 void loop() {
-//	while(Serial.available()) GPSPort.write(Serial.read());
-//	while(GPSPort.available()) Serial.write(GPSPort.read());
+//	while(SerialUSB.available()) GPSPort.write(SerialUSB.read());
+//	while(GPSPort.available()) SerialUSB.write(GPSPort.read());
 	if (hasFix) {
-		Serial.print(F("Location: "));
+		SerialUSB.print(F("Location: "));
 		if (fix.valid.location) {
-			Serial.print(fix.latitude(), 6);
-			Serial.print(',');
-			Serial.print(fix.longitude(), 6);
+			SerialUSB.print(fix.latitude(), 6);
+			SerialUSB.print(',');
+			SerialUSB.print(fix.longitude(), 6);
 		}
-		Serial.print(F(", Altitude: "));
+		SerialUSB.print(F(", Altitude: "));
 		if (fix.valid.altitude)
-			Serial.print(fix.altitude());
-		Serial.print(F(", Speed: "));
-		if (fix.valid.speed) {
-			speedMPH = fix.speed_mph();
-			Serial.print(speedMPH);
-		}
-		Serial.println();
+			SerialUSB.print(fix.altitude());
+		SerialUSB.print(F(", Speed: "));
+		if (fix.valid.speed) SerialUSB.print(fix.speed_mph());
+		SerialUSB.println();
 		hasFix = false;
-	}
-	millLast = millEnd - millStart;
-	millStart = millis();
-	t = freeRAM();
-	switch (getButtons()) {
-		case leftPin:
-			break;
-		case rightPin:
-			break;
-		case upPin:
-			if (lastButton == upPin && wasTouched) {
-				if (millis() - startTouch < BUTTON_LONGPRESS) break;
-			} else {
-				lastButton = upPin;
-				wasTouched = true;
-				startTouch = millis();
-			}
-			sel.increase();
-			ui.show();
-			break;
-		case downPin:
-			if (lastButton == downPin && wasTouched) {
-				if (millis() - startTouch < BUTTON_LONGPRESS) break;
-			} else {
-				lastButton = downPin;
-				wasTouched = true;
-				startTouch = millis();
-			}
-			sel.decrease();
-			ui.show();
-			break;
-		case selectPin:
-			break;
-		default:
-			wasTouched = false;
-			break;
 	}
 	ui.show();
 	e.show();
-	if (ConfigurationManager::hasTime) Serial.println(TimeManager::formatTime());
-}
-
-buttons getButtons() {
-	if (digitalRead(leftPin) == LOW) return leftPin;
-	if (digitalRead(rightPin) == LOW) return rightPin;
-	if (digitalRead(upPin) == LOW) return upPin;
-	if (digitalRead(downPin) == LOW) return downPin;
-	if (digitalRead(selectPin) == LOW) return selectPin;
-	return noButtons;
+	if (ConfigurationManager::hasTime) ui.setTitle(TimeManager::formatTime());
+	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
+	l.buttonEvent(ButtonManager::getButtons());
 }

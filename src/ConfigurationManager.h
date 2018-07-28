@@ -19,13 +19,29 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Location.h>
 
 namespace ConfigurationManager {
 	// Runtime
 	static bool hasTime = false;
 	// Saved
 	static bool is24Hour = false;
-	static uint8_t LEDStripBrightness = 100;
-	static void save();
-	static void load();
+	extern uint8_t LEDStripBrightness;
+
+	void save();
+
+	void load();
+
+	struct Location {
+		NeoGPS::Location_t location;
+		char name[19];
+
+		float milesTo(NeoGPS::Location_t otherLocation) {
+			return location.DistanceMiles(otherLocation);
+		}
+
+		float kilometersTo(NeoGPS::Location_t otherLocation) {
+			return location.DistanceKm(otherLocation);
+		}
+	};
 };

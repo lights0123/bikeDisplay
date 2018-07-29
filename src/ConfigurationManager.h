@@ -20,6 +20,9 @@
 
 #include <Arduino.h>
 #include <Location.h>
+#include <NeoTime.h>
+#include <TimeLib.h>
+#include <Timezone.h>
 
 namespace ConfigurationManager {
 	// Runtime
@@ -43,5 +46,77 @@ namespace ConfigurationManager {
 		float kilometersTo(NeoGPS::Location_t otherLocation) {
 			return location.DistanceKm(otherLocation);
 		}
+	};
+};
+
+namespace TimeManager {
+	::TimeChangeRule timeDaylight = {"EDT", ::Second, ::Sun, ::Mar, 2, ConfigurationManager::timezoneOffset +
+	                                                                   (ConfigurationManager::useDaylightSavings ? 60
+	                                                                                                             : 0)};
+	::TimeChangeRule timeStandard = {"EST", ::First, ::Sun, ::Nov, 2, ConfigurationManager::timezoneOffset};
+	::Timezone timezone(timeDaylight, timeStandard);
+
+	void updateRules() {
+		timeDaylight.offset =
+				ConfigurationManager::timezoneOffset + (ConfigurationManager::useDaylightSavings ? 60 : 0);
+		timeStandard.offset = ConfigurationManager::timezoneOffset;
+		timezone.setRules(timeDaylight, timeStandard);
+	}
+
+	void setTime(NeoGPS::time_t dt) {
+		::setTime(dt.hours, dt.minutes, dt.seconds, dt.date, dt.month, dt.year);
+		ConfigurationManager::hasTime = true;
+	};
+
+	int hours() {
+		return ::hour(timezone.toLocal(::now()));
+	}
+
+	int hours12() {
+		return ::hourFormat12(timezone.toLocal(::now()));
+	}
+
+	int minutes() {
+		return ::minute(timezone.toLocal(::now()));
+	}
+
+	int seconds() {
+		return ::second(timezone.toLocal(::now()));
+	}
+
+	bool isAM() {
+		return ::isAM(timezone.toLocal(::now()));
+	}
+
+	bool isPM() {
+		return ::isPM(timezone.toLocal(::now()));
+	}
+
+	int year() {
+		return ::year(timezone.toLocal(::now()));
+	}
+
+	int month() {
+		return ::month(timezone.toLocal(::now()));
+	}
+
+	int date() {
+		return ::day(timezone.toLocal(::now()));
+	}
+
+	int day() {
+		return ::weekday(timezone.toLocal(::now()));
+	}
+
+	String formatTime(time_t time) {
+		if (ConfigurationManager::is24Hour) {
+			return String(hours()) + String(":") + String(minutes());
+		} else {
+			return String(String(hours12()) + String(":") + String(minutes()) + String(isAM() ? " AM" : " PM"));
+		}
+	};
+
+	String formatTime() {
+		return formatTime(timezone.toLocal(::now()));
 	};
 };

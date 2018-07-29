@@ -35,7 +35,6 @@
 #include "wiring_private.h"
 #include "EffectManager.h"
 #include "ConfigurationManager.h"
-#include "TimeManager.h"
 #include "UIMenu.h"
 
 NMEAGPS gps;

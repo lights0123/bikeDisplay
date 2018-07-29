@@ -21,8 +21,10 @@
 #pragma once
 
 #include <Arduino.h>
+#include <functional-vlpp.h>
 #include "UIManager.h"
 #include "ConfigurationManager.h"
+//#include "freeRAM.h"
 
 namespace ButtonManager {
 	const int BUTTON_LONGPRESS = 800;
@@ -49,7 +51,7 @@ namespace ButtonManager {
 
 class Drawable {
 public:
-	virtual void enter(void (*exitCB)()) = 0;
+	virtual void enter(vl::Func<void()> exitCB) = 0;
 
 	virtual void buttonEvent(ButtonManager::Button b) = 0;
 
@@ -58,7 +60,7 @@ protected:
 
 	UIManager *ui;
 
-	void (*exit)();
+	vl::Func<void()> exit;
 };
 
 class LEDStripBriSetting : public Drawable {
@@ -66,10 +68,38 @@ public:
 	explicit LEDStripBriSetting(UIManager *ui) : Drawable(ui), slider(
 			UIManager::UISlider(ui, "LED Strip Brightness", ConfigurationManager::LEDStripBrightness)) {};
 
-	void enter(void (*exitCB)()) override;
+	void enter(vl::Func<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 
 private:
 	UIManager::UISlider slider;
+};
+
+class Preferences : public Drawable {
+public:
+	explicit Preferences(UIManager *ui) : Drawable(ui), Selector(
+			UIManager::UISelector(ui, 2, [](int pos) -> String {
+				switch (pos) {
+					case 0:
+						return "LED Strip";
+					case 1:
+						return ConfigurationManager::is24Hour ? "24 Hour" : "12 Hour";
+					default:
+						return "";
+				}
+			})), l(ui) {};
+
+	void enter(vl::Func<void()> exitCB) override;
+
+	void buttonEvent(ButtonManager::Button b) override;
+
+private:
+	UIManager::UISelector Selector;
+	enum class CurrentDisplay {
+		MENU,
+		LED_STRIP
+	};
+	CurrentDisplay currentDisplay = CurrentDisplay::MENU;
+	LEDStripBriSetting l;
 };

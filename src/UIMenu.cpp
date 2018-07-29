@@ -56,7 +56,7 @@ ButtonManager::ButtonPress ButtonManager::longPressHelper(Button button) {
 	return b;
 }
 
-void LEDStripBriSetting::enter(void (*exitCB)()) {
+void LEDStripBriSetting::enter(vl::Func<void()> exitCB) {
 	exit = exitCB;
 	slider
 			.setValue(ConfigurationManager::LEDStripBrightness)
@@ -73,12 +73,54 @@ void LEDStripBriSetting::buttonEvent(ButtonManager::Button b) {
 
 	ButtonPress buttonPress = ButtonManager::longPressHelper(b);
 	Button button = buttonPress.button;
-	unsigned long changeFreq = ceil((millis() - buttonPress.startTouch + 1)/1250.0);
+	unsigned long changeFreq = ceil((millis() - buttonPress.startTouch + 1) / 1250.0);
 
-	if(button==Button::noButton) return;
+	if (button == Button::noButton) return;
 	if (button == Button::rightPin || button == Button::upPin) slider.increase(changeFreq);
 	else if (button == Button::leftPin || button == Button::downPin) slider.decrease(changeFreq);
 	else {
+		exit();
+		return;
+	}
+	ui->show();
+}
+
+void Preferences::enter(vl::Func<void()> exitCB) {
+	exit = exitCB;
+	ui->setType(&Selector);
+}
+
+void Preferences::buttonEvent(ButtonManager::Button b) {
+	using namespace ButtonManager;
+
+	switch (currentDisplay) {
+		case CurrentDisplay::LED_STRIP:
+			return l.buttonEvent(b);
+		default:
+			break;
+	}
+	Button button = ButtonManager::longPressHelper(b).button;
+
+	if (button == Button::noButton) return;
+	if (button == Button::upPin) Selector.moveUp();
+	else if (button == Button::downPin) Selector.moveDown();
+	else if (button == Button::selectPin) {
+		SerialUSB.println(Selector.getPosition());
+		switch (Selector.getPosition()) {
+			case 0:
+				currentDisplay = CurrentDisplay::LED_STRIP;
+				l.enter([this]() {
+					currentDisplay = CurrentDisplay::MENU;
+					ui->setType(&Selector);
+				});
+				break;
+			case 1:
+				ConfigurationManager::is24Hour = !ConfigurationManager::is24Hour;
+				break;
+			default:
+				break;
+		}
+	} else {
 		exit();
 		return;
 	}

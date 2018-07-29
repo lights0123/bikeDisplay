@@ -19,6 +19,7 @@
 #pragma once
 
 #include <U8g2lib.h>
+#include <functional-vlpp.h>
 
 enum UI_TYPES {
 	UI_SELECTION,
@@ -47,7 +48,14 @@ public:
 
 	class UISelector : public UIType {
 	public:
-		UISelector(UIManager *manager, int positions, String (*cb)(int)) : manager(manager), display(manager->display),
+		/**
+		 * Represents a selector that can be navigated
+		 *
+		 * @param manager A pointer to the UIManager
+		 * @param positions Number of positions in the selector
+		 * @param cb A callback that is given a zero-indexed integer that returns a String of the desired output
+		 */
+		UISelector(UIManager *manager, int positions, vl::Func<String(int)> cb) : manager(manager), display(manager->display),
 		                                                                   positions(positions), cb(cb) {};
 
 		void show() override;
@@ -56,6 +64,10 @@ public:
 
 		void moveDown();
 
+		int getPosition(){
+			return currentPosition;
+		}
+
 	private:
 		UIManager *manager;
 		U8G2 *display;
@@ -63,7 +75,7 @@ public:
 		int currentPosition = 0;
 		int topItem = 0;
 
-		String (*cb)(int);
+		vl::Func<String(int)> cb;
 	};
 
 	class UISlider : public UIType {
@@ -90,7 +102,7 @@ public:
 		 * @param cbChangeNew New callback that accepts an integer
 		 * @return itself, for a fluent-style interface
 		 */
-		UISlider &onChange(void (*cbChangeNew)(int));
+		UISlider &onChange(vl::Func<void(int)> cbChangeNew);
 
 		void show() override;
 
@@ -107,7 +119,7 @@ public:
 		String name;
 		String suffix = "%";
 
-		void (*cbChange)(int);
+		vl::Func<void(int)> cbChange;
 
 	};
 

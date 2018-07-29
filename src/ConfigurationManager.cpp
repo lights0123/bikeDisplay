@@ -20,6 +20,9 @@
 #include "ConfigurationManager.h"
 
 uint8_t ConfigurationManager::LEDStripBrightness = 100;
+bool ConfigurationManager::is24Hour = false;
+bool ConfigurationManager::hasTime = false;
+
 void ConfigurationManager::save() {
 
 }

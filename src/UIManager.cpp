@@ -103,7 +103,7 @@ UIManager::UISlider &UIManager::UISlider::setSuffix(String newSuffix) {
 }
 
 
-UIManager::UISlider &UIManager::UISlider::onChange(void (*cbChangeNew)(int)) {
+UIManager::UISlider &UIManager::UISlider::onChange(vl::Func<void(int)> cbChangeNew) {
 	cbChange = cbChangeNew;
 	return *this;
 }

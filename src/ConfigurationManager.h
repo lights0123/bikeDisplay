@@ -23,9 +23,9 @@
 
 namespace ConfigurationManager {
 	// Runtime
-	static bool hasTime = false;
+	extern bool hasTime;
 	// Saved
-	static bool is24Hour = false;
+	extern bool is24Hour;
 	extern uint8_t LEDStripBrightness;
 
 	void save();

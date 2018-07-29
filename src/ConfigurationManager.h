@@ -23,17 +23,9 @@
 #include <NeoTime.h>
 #include <TimeLib.h>
 #include <Timezone.h>
+#include <GPSfix.h>
 
 namespace ConfigurationManager {
-	// Runtime
-	extern bool hasTime;
-	// Saved
-	extern bool is24Hour;
-	extern uint8_t LEDStripBrightness;
-
-	void save();
-
-	void load();
 
 	struct Location {
 		NeoGPS::Location_t location;
@@ -47,76 +39,120 @@ namespace ConfigurationManager {
 			return location.DistanceKm(otherLocation);
 		}
 	};
+	// Runtime
+	extern bool hasTime;
+	extern int batteryLevel;
+	extern Location currentNav;
+	// Saved
+	extern bool is24Hour;
+	extern bool useDaylightSavings;
+	extern uint8_t LEDStripBrightness;
+	extern int timezoneOffset;
+
+	void save();
+
+	void load();
+
+	static int getLocationCount() {
+		return 4;
+	}
+
+	static Location getLocation(int loc) {
+		// TODO: read from SD card
+		const Location temp[] = {Location{NeoGPS::Location_t(404381311L, -38196229L), "Madrid"},
+		                         Location{NeoGPS::Location_t(407127000L, -740059000L), "New y"},
+		                         Location{NeoGPS::Location_t(404381311L, -38196229L), "Madrid"},
+		                         Location{NeoGPS::Location_t(407127000L, -740059000L), "New Yor"}};
+		return temp[loc];
+	}
+
+	static String formatAsTracklog(gps_fix fix) {
+		// To be read by http://www.gpsvisualizer.com
+		// type,year,month,day,hour,minute,seconds,latitude,longitude,altitude(ft),speed(mph),course
+		String s = "T,";
+		String c = ",";
+		s += fix.valid.date ? (fix.dateTime.year + c + fix.dateTime.month + c + fix.dateTime.day) : ",,";
+		s += ',';
+		s += fix.valid.time ? (fix.dateTime.hours + c + fix.dateTime.minutes + c + fix.dateTime.seconds) : ",,";
+		s += ',';
+		s += fix.valid.location ? (String(fix.latitude(), 6) + c + String(fix.longitude(),6)) : ",";
+		s += ',';
+		s += fix.valid.altitude ? String(fix.altitude_ft()) : "";
+		s += ',';
+		s += fix.valid.speed ? String(fix.speed_mph()) : "";
+		s += ',';
+		s += fix.valid.heading ? String(fix.heading()) : "";
+		return s;
+	}
 };
 
 namespace TimeManager {
-	::TimeChangeRule timeDaylight = {"EDT", ::Second, ::Sun, ::Mar, 2, ConfigurationManager::timezoneOffset +
-	                                                                   (ConfigurationManager::useDaylightSavings ? 60
-	                                                                                                             : 0)};
-	::TimeChangeRule timeStandard = {"EST", ::First, ::Sun, ::Nov, 2, ConfigurationManager::timezoneOffset};
-	::Timezone timezone(timeDaylight, timeStandard);
+	extern ::TimeChangeRule timeDaylight;
+	extern ::TimeChangeRule timeStandard;
+	extern ::Timezone timezone;
 
-	void updateRules() {
+	static void updateRules() {
 		timeDaylight.offset =
 				ConfigurationManager::timezoneOffset + (ConfigurationManager::useDaylightSavings ? 60 : 0);
 		timeStandard.offset = ConfigurationManager::timezoneOffset;
 		timezone.setRules(timeDaylight, timeStandard);
 	}
 
-	void setTime(NeoGPS::time_t dt) {
+	static void setTime(NeoGPS::time_t dt) {
 		::setTime(dt.hours, dt.minutes, dt.seconds, dt.date, dt.month, dt.year);
 		ConfigurationManager::hasTime = true;
 	};
 
-	int hours() {
+	static int hours() {
 		return ::hour(timezone.toLocal(::now()));
 	}
 
-	int hours12() {
+	static int hours12() {
 		return ::hourFormat12(timezone.toLocal(::now()));
 	}
 
-	int minutes() {
+	static int minutes() {
 		return ::minute(timezone.toLocal(::now()));
 	}
 
-	int seconds() {
+	static int seconds() {
 		return ::second(timezone.toLocal(::now()));
 	}
 
-	bool isAM() {
+	static bool isAM() {
 		return ::isAM(timezone.toLocal(::now()));
 	}
 
-	bool isPM() {
+	static bool isPM() {
 		return ::isPM(timezone.toLocal(::now()));
 	}
 
-	int year() {
+	static int year() {
 		return ::year(timezone.toLocal(::now()));
 	}
 
-	int month() {
+	static int month() {
 		return ::month(timezone.toLocal(::now()));
 	}
 
-	int date() {
+	static int date() {
 		return ::day(timezone.toLocal(::now()));
 	}
 
-	int day() {
+	static int day() {
 		return ::weekday(timezone.toLocal(::now()));
 	}
 
-	String formatTime(time_t time) {
+	static String formatTime(time_t time) {
 		if (ConfigurationManager::is24Hour) {
-			return String(hours()) + String(":") + String(minutes());
+			return String(hours()) + String(":") + String(minutes() < 10 ? "0" : "") + String(minutes());
 		} else {
-			return String(String(hours12()) + String(":") + String(minutes()) + String(isAM() ? " AM" : " PM"));
+			return String(String(hours12()) + String(":") + String(minutes() < 10 ? "0" : "") + String(minutes()) +
+			              String(isAM() ? " AM" : " PM"));
 		}
 	};
 
-	String formatTime() {
+	static String formatTime() {
 		return formatTime(timezone.toLocal(::now()));
 	};
 };

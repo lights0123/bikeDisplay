@@ -18,9 +18,10 @@
 
 #include <Arduino.h>
 #include "UIManager.h"
+#include "ConfigurationManager.h"
 
 #define titleHeight 16
-#define UIFont u8g2_font_7x14_tr
+#define UIFont u8g2_font_7x14_mr
 #define UIFontHeight 10
 #define listEntries ((display->getDisplayHeight() - titleHeight) / (UIFontHeight + 2))
 
@@ -31,10 +32,12 @@ void UIManager::setTitle(String titleIn) {
 void UIManager::show() {
 	display->clearBuffer();
 	display->setFont(u8g2_font_crox3h_tr);
-	int width = display->getUTF8Width(title.c_str());
-	display->setCursor((display->getDisplayWidth() - width) / 2, titleHeight);
 	display->setDrawColor(1);
+	display->setCursor(0, titleHeight);
 	display->print(title);
+	display->setCursor(displayWidth - display->getUTF8Width((String(ConfigurationManager::batteryLevel) + '%').c_str()),
+	                   titleHeight);
+	display->print(String(ConfigurationManager::batteryLevel) + '%');
 	display->setFont(UIFont);
 	currentDisplay->show();
 	display->sendBuffer();
@@ -45,26 +48,35 @@ void UIManager::setType(UIManager::UIType *type) {
 }
 
 void UIManager::UISelector::show() {
-	int progressBarStart = 0, progressBarLength = 0;
-	float progress = (float) currentPosition / (float) (positions - 1);
-	float unitLength = (float) 1 / (float) positions;
-	progressBarLength = (display->getDisplayHeight() - 17) / 2.4;
-	progressBarStart = progress * (display->getDisplayHeight() - titleHeight - progressBarLength);
+	const float progress = (float) currentPosition / (float) (positions - 1);
+	const int progressBarLength = (displayHeight - 17) / 2.4;
+	const int progressBarStart = progress * (displayHeight - titleHeight - progressBarLength);
+	const int progressBarWidth = 3;
 
-	for (int i = topItem; i < positions && i < topItem + listEntries; i++) {
-		int top = titleHeight + (UIFontHeight + 2) * ((i - topItem) + 1) - 1;
+	auto drawPosition = [this](int position, bool isSelected = false) {
+		const u8g2_uint_t top = titleHeight + (UIFontHeight + 2) * ((position - topItem) + 1);
 		display->setDrawColor(1);
-		if (i == currentPosition) {
-			display->drawBox(0, top - 1 - UIFontHeight, display->getDisplayWidth() - 3,
-			                 UIFontHeight + 2);
+		if (isSelected) {
+			display->drawBox(0, top - 2 - UIFontHeight, displayWidth - progressBarWidth, UIFontHeight + 4);
 			display->setDrawColor(0);
 		}
 		display->setCursor(0, top);
-		display->print(cb(i));
+		ListItem l = cb(position);
+		display->print(l.leftSide);
+		if (l.rightSide != "") {
+			display->setCursor(displayWidth - progressBarWidth - display->getUTF8Width(l.rightSide.c_str()), top);
+			display->print(l.rightSide);
+		}
+	};
+
+	for (int i = topItem; i < positions && i < topItem + listEntries; i++) {
+		if (i == currentPosition) continue;
+		drawPosition(i);
 	}
+	drawPosition(currentPosition, true);
+
 	display->setDrawColor(1);
-	display->drawBox(display->getDisplayWidth() - 3, progressBarStart + 16,
-	                 3, progressBarLength);
+	display->drawBox(displayWidth - progressBarWidth, progressBarStart + 16, progressBarWidth, progressBarLength);
 }
 
 void UIManager::UISelector::moveUp() {
@@ -110,8 +122,6 @@ UIManager::UISlider &UIManager::UISlider::onChange(vl::Func<void(int)> cbChangeN
 
 void UIManager::UISlider::show() {
 	const double screenPercentage = 0.8;
-	const int displayWidth = display->getDisplayWidth();
-	const int displayHeight = display->getDisplayHeight();
 
 	// Divide by 2, round, and multiply by 2 so that the output is an even number
 	const int barWidth = round(displayWidth * screenPercentage / 2) * 2;

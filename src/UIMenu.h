@@ -103,3 +103,24 @@ private:
 	CurrentDisplay currentDisplay = CurrentDisplay::MENU;
 	LEDStripBriSetting l;
 };
+
+class Locations : public Drawable {
+public:
+	explicit Locations(UIManager *ui) : Drawable(ui), Selector(
+			UIManager::UISelector(ui, ConfigurationManager::getLocationCount(), [](int pos) {
+				return UIManager::UISelector::ListItem{ConfigurationManager::getLocation(pos).name, "5451mi"};
+			})), l(ui) {};
+
+	void enter(vl::Func<void()> exitCB) override;
+
+	void buttonEvent(ButtonManager::Button b) override;
+
+private:
+	UIManager::UISelector Selector;
+	enum class CurrentDisplay {
+		MENU,
+		LED_STRIP
+	};
+	CurrentDisplay currentDisplay = CurrentDisplay::MENU;
+	LEDStripBriSetting l;
+};

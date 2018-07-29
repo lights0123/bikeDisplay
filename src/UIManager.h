@@ -20,6 +20,7 @@
 
 #include <U8g2lib.h>
 #include <functional-vlpp.h>
+#include <GPSfix.h>
 
 enum UI_TYPES {
 	UI_SELECTION,
@@ -31,14 +32,19 @@ public:
 
 	class UIType {
 	public:
-		UIType() = default;
-
-		virtual void prepareShow() {};
+		explicit UIType(UIManager *manager) : manager(manager), display(manager->display),
+		                                      displayWidth(display->getDisplayWidth()),
+		                                      displayHeight(display->getDisplayHeight()) {};
 
 		virtual void show() {};
+	protected:
+		UIManager *manager;
+		U8G2 *display;
+		int displayWidth, displayHeight;
 	};
 
-	explicit UIManager(U8G2 *display) : display(display) {}
+	explicit UIManager(U8G2 *display) : display(display), displayWidth(display->getDisplayWidth()),
+	                                    displayHeight(display->getDisplayHeight()) {}
 
 	void setTitle(String titleIn);
 
@@ -48,6 +54,14 @@ public:
 
 	class UISelector : public UIType {
 	public:
+		struct ListItem {
+			String leftSide, rightSide = "";
+
+			ListItem(String leftSide) : leftSide(leftSide) {};
+
+			ListItem(String leftSide, String rightSide) : leftSide(leftSide), rightSide(rightSide) {};
+		};
+
 		/**
 		 * Represents a selector that can be navigated
 		 *
@@ -55,8 +69,8 @@ public:
 		 * @param positions Number of positions in the selector
 		 * @param cb A callback that is given a zero-indexed integer that returns a String of the desired output
 		 */
-		UISelector(UIManager *manager, int positions, vl::Func<String(int)> cb) : manager(manager), display(manager->display),
-		                                                                   positions(positions), cb(cb) {};
+		UISelector(UIManager *manager, int positions, vl::Func<ListItem(int)> cb) : UIType(manager),
+		                                                                            positions(positions), cb(cb) {};
 
 		void show() override;
 
@@ -64,23 +78,21 @@ public:
 
 		void moveDown();
 
-		int getPosition(){
+		int getPosition() {
 			return currentPosition;
 		}
 
 	private:
-		UIManager *manager;
-		U8G2 *display;
 		int positions;
 		int currentPosition = 0;
 		int topItem = 0;
 
-		vl::Func<String(int)> cb;
+		vl::Func<ListItem(int)> cb;
 	};
 
 	class UISlider : public UIType {
 	public:
-		UISlider(UIManager *manager, String name, int value) : manager(manager), display(manager->display),
+		UISlider(UIManager *manager, String name, int value) : UIType(manager),
 		                                                       value(value), name(name), cbChange([](int) {}) {};
 
 		/**
@@ -111,8 +123,6 @@ public:
 		void decrease(int amount = 1);
 
 	private:
-		UIManager *manager;
-		U8G2 *display;
 		int min = 0;
 		int max = 100;
 		int value = 0;
@@ -127,4 +137,5 @@ private:
 	U8G2 *display;
 	UIType *currentDisplay;
 	String title;
+	int displayWidth, displayHeight;
 };

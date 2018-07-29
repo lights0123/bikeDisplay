@@ -73,7 +73,7 @@ void LEDStripBriSetting::buttonEvent(ButtonManager::Button b) {
 
 	ButtonPress buttonPress = ButtonManager::longPressHelper(b);
 	Button button = buttonPress.button;
-	unsigned long changeFreq = ceil((millis() - buttonPress.startTouch + 1) / 1250.0);
+	unsigned long changeFreq = ceil((millis() - buttonPress.startTouch + 1) / 1000.0);
 
 	if (button == Button::noButton) return;
 	if (button == Button::rightPin || button == Button::upPin) slider.increase(changeFreq);
@@ -82,7 +82,6 @@ void LEDStripBriSetting::buttonEvent(ButtonManager::Button b) {
 		exit();
 		return;
 	}
-	ui->show();
 }
 
 void Preferences::enter(vl::Func<void()> exitCB) {
@@ -105,7 +104,6 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 	if (button == Button::upPin) Selector.moveUp();
 	else if (button == Button::downPin) Selector.moveDown();
 	else if (button == Button::selectPin) {
-		SerialUSB.println(Selector.getPosition());
 		switch (Selector.getPosition()) {
 			case 0:
 				currentDisplay = CurrentDisplay::LED_STRIP;
@@ -124,5 +122,23 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 		exit();
 		return;
 	}
-	ui->show();
+}
+
+void Locations::enter(vl::Func<void()> exitCB) {
+	exit = exitCB;
+	ui->setType(&Selector);
+}
+
+void Locations::buttonEvent(ButtonManager::Button b) {
+	using namespace ButtonManager;
+
+	Button button = ButtonManager::longPressHelper(b).button;
+
+	if (button == Button::noButton) return;
+	if (button == Button::upPin) Selector.moveUp();
+	else if (button == Button::downPin) Selector.moveDown();
+	else if (button == Button::selectPin) {
+		exit();
+		return;
+	}
 }

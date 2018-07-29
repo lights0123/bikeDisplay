@@ -19,9 +19,21 @@
 
 #include "ConfigurationManager.h"
 
+int ConfigurationManager::batteryLevel = 100;
+bool ConfigurationManager::hasTime = false;
+ConfigurationManager::Location ConfigurationManager::currentNav{NeoGPS::Location_t(), ""};
+
 uint8_t ConfigurationManager::LEDStripBrightness = 100;
 bool ConfigurationManager::is24Hour = false;
-bool ConfigurationManager::hasTime = false;
+bool ConfigurationManager::useDaylightSavings = true;
+int ConfigurationManager::timezoneOffset = -300;
+
+::TimeChangeRule TimeManager::timeDaylight = {"EDT", ::Second, ::Sun, ::Mar, 2, ConfigurationManager::timezoneOffset +
+                                                                                (ConfigurationManager::useDaylightSavings
+                                                                                 ? 60 : 0)};
+::TimeChangeRule TimeManager::timeStandard = {"EST", ::First, ::Sun, ::Nov, 2, ConfigurationManager::timezoneOffset};
+::Timezone TimeManager::timezone(TimeManager::timeDaylight, TimeManager::timeStandard);
+
 
 void ConfigurationManager::save() {
 

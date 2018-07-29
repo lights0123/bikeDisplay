@@ -37,5 +37,18 @@ void EffectManager::blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, u
 }
 
 void EffectManager::allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset, uint32_t color) {
-	for (uint16_t i = offset; i < numLEDs; i++) leds->setPixelColor(i, color);
+	for (uint16_t i = offset; i < numLEDs + offset; i++) leds->setPixelColor(i, color);
+}
+
+void EffectManager::rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
+	static uint8_t startIndex = 0;
+	static unsigned long lastTime = 0;
+	startIndex+=(millis() - lastTime) / 10;
+	lastTime = millis();
+	uint8_t colorIndex = startIndex++;
+	for (uint16_t i = offset; i < numLEDs + offset; i++) {
+		CRGB color = ColorFromPalette(RainbowColors_p, colorIndex, 255, LINEARBLEND);
+		leds->setPixelColor(i, color.r, color.g, color.b);
+		colorIndex += 3;
+	}
 }

@@ -17,25 +17,25 @@
 */
 
 #include <Arduino.h>
-#include "UIManager.h"
-#include "ConfigurationManager.h"
+#include "UI.h"
+#include "Config.h"
 
 #define titleHeight 16
 #define UIFont u8g2_font_7x14_mr
 #define UIFontHeight 10
 #define listEntries ((display->getDisplayHeight() - titleHeight) / (UIFontHeight + 2))
 
-void UIManager::setTitle(String titleIn) {
+void UI::setTitle(String titleIn) {
 	title = titleIn;
 }
 
-void UIManager::show() {
+void UI::show() {
 	display->clearBuffer();
 	display->setFont(u8g2_font_crox3h_tr);
 	display->setDrawColor(1);
 	display->setCursor(0, titleHeight);
 	display->print(title);
-	String batteryPercentage = String(ConfigurationManager::batteryLevel) + '%';
+	String batteryPercentage = String(Config::batteryLevel) + '%';
 	display->setCursor(displayWidth - display->getUTF8Width(batteryPercentage.c_str()), titleHeight);
 	display->print(batteryPercentage);
 	display->setFont(UIFont);
@@ -43,11 +43,11 @@ void UIManager::show() {
 	display->sendBuffer();
 }
 
-void UIManager::setType(UIManager::UIType *type) {
+void UI::setType(UI::UIType *type) {
 	currentDisplay = type;
 }
 
-void UIManager::UISelector::show() {
+void UI::UISelector::show() {
 	const float progress = (float) currentPosition / (float) (positions - 1);
 	const int progressBarLength = (displayHeight - 17) / 2.4;
 	const int progressBarStart = progress * (displayHeight - titleHeight - progressBarLength);
@@ -79,48 +79,48 @@ void UIManager::UISelector::show() {
 	display->drawBox(displayWidth - progressBarWidth, progressBarStart + 16, progressBarWidth, progressBarLength);
 }
 
-void UIManager::UISelector::moveUp() {
+void UI::UISelector::moveUp() {
 	if (currentPosition > 0) {
 		currentPosition--;
 		if (topItem > currentPosition) topItem--;
 	}
 }
 
-void UIManager::UISelector::moveDown() {
+void UI::UISelector::moveDown() {
 	if (currentPosition + 1 < positions) {
 		currentPosition++;
 		if (topItem <= currentPosition - listEntries) topItem++;
 	}
 }
 
-UIManager::UISlider &UIManager::UISlider::setBounds(int newMin, int newMax) {
+UI::UISlider &UI::UISlider::setBounds(int newMin, int newMax) {
 	min = newMin;
 	max = newMax;
 	return *this;
 }
 
-UIManager::UISlider &UIManager::UISlider::setValue(int newValue) {
+UI::UISlider &UI::UISlider::setValue(int newValue) {
 	value = newValue;
 	return *this;
 }
 
-UIManager::UISlider &UIManager::UISlider::setName(String newName) {
+UI::UISlider &UI::UISlider::setName(String newName) {
 	name = newName;
 	return *this;
 }
 
-UIManager::UISlider &UIManager::UISlider::setSuffix(String newSuffix) {
+UI::UISlider &UI::UISlider::setSuffix(String newSuffix) {
 	suffix = newSuffix;
 	return *this;
 }
 
 
-UIManager::UISlider &UIManager::UISlider::onChange(vl::Func<void(int)> cbChangeNew) {
+UI::UISlider &UI::UISlider::onChange(vl::Func<void(int)> cbChangeNew) {
 	cbChange = cbChangeNew;
 	return *this;
 }
 
-void UIManager::UISlider::show() {
+void UI::UISlider::show() {
 	const double screenPercentage = 0.8;
 
 	// Divide by 2, round, and multiply by 2 so that the output is an even number
@@ -149,19 +149,19 @@ void UIManager::UISlider::show() {
 	display->print(valueString);
 }
 
-void UIManager::UISlider::increase(int amount) {
+void UI::UISlider::increase(int amount) {
 	int oldVal = value;
 	value = min(max, value + amount);
 	if (value != oldVal) cbChange(value);
 }
 
-void UIManager::UISlider::decrease(int amount) {
+void UI::UISlider::decrease(int amount) {
 	int oldVal = value;
 	value = max(min, value - amount);
 	if (value != oldVal) cbChange(value);
 }
 
-void UIManager::UIMain::show() {
+void UI::UIMain::show() {
 	/*
 	 * Layout:
 	 * +---------+------------+
@@ -173,7 +173,7 @@ void UIManager::UIMain::show() {
 
 	// Left Half
 	{
-		bool displayDistance = ConfigurationManager::currentNav.name != "" && fix.valid.location;
+		bool displayDistance = Config::currentNav.name != "" && fix.valid.location;
 		if (fix.valid.heading) {
 			const u8g2_uint_t leftCenter = displayWidth / 4;
 			const int heading = fix.heading() + 180;
@@ -197,7 +197,7 @@ void UIManager::UIMain::show() {
 		}
 		if (displayDistance) {
 			display->setCursor(0, displayHeight);
-			display->print(ConfigurationManager::currentNav.distanceString(fix.location));
+			display->print(Config::currentNav.distanceString(fix.location));
 		}
 	}
 
@@ -205,19 +205,19 @@ void UIManager::UIMain::show() {
 	{
 		const u8g2_uint_t rightCenter = displayWidth / 4 * 3;
 		if (fix.valid.location) {
-			if (ConfigurationManager::currentNav.name == "") {
-				if (ConfigurationManager::getLocationCount() > 0) {
+			if (Config::currentNav.name == "") {
+				if (Config::getLocationCount() > 0) {
 					// Not currently navigating
-					String distanceMessage = ConfigurationManager::getLocation(0).distanceString(fix.location) + " to";
+					String distanceMessage = Config::getLocation(0).distanceString(fix.location) + " to";
 					display->setCursor(displayWidth / 2, titleHeight + UIFontHeight + 2);
 					display->print(distanceMessage);
 					display->setCursor(displayWidth / 2, titleHeight + UIFontHeight * 2 + 4);
-					display->print(ConfigurationManager::getLocation(0).name);
+					display->print(Config::getLocation(0).name);
 				}
 			} else {
 				// Currently navigating
 				if (fix.valid.heading) {
-					const int heading = fix.heading() - ConfigurationManager::currentNav.degreesTo(fix.location);
+					const int heading = fix.heading() - Config::currentNav.degreesTo(fix.location);
 					const u8g2_uint_t arrowVertCenter = (displayHeight - UIFontHeight - titleHeight) / 2 + titleHeight;
 					const int radius = min((displayHeight - UIFontHeight - titleHeight) / 2 - 2, displayWidth / 4);
 					const int arrowHead = 5;

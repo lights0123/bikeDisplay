@@ -22,8 +22,8 @@
 
 #include <Arduino.h>
 #include <functional-vlpp.h>
-#include "UIManager.h"
-#include "ConfigurationManager.h"
+#include "UI.h"
+#include "Config.h"
 //#include "freeRAM.h"
 
 namespace ButtonManager {
@@ -56,35 +56,35 @@ public:
 	virtual void buttonEvent(ButtonManager::Button b) = 0;
 
 protected:
-	explicit Drawable(UIManager *ui) : ui(ui) {};
+	explicit Drawable(UI *ui) : ui(ui) {};
 
-	UIManager *ui;
+	UI *ui;
 
 	vl::Func<void()> exit;
 };
 
 class LEDStripBriSetting : public Drawable {
 public:
-	explicit LEDStripBriSetting(UIManager *ui) : Drawable(ui), slider(
-			UIManager::UISlider(ui, "LED Strip Brightness", ConfigurationManager::LEDStripBrightness)) {};
+	explicit LEDStripBriSetting(UI *ui) : Drawable(ui), slider(
+			UI::UISlider(ui, "LED Strip Brightness", Config::LEDStripBrightness)) {};
 
 	void enter(vl::Func<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 
 private:
-	UIManager::UISlider slider;
+	UI::UISlider slider;
 };
 
 class Preferences : public Drawable {
 public:
-	explicit Preferences(UIManager *ui) : Drawable(ui), Selector(
-			UIManager::UISelector(ui, 2, [](int pos) -> String {
+	explicit Preferences(UI *ui) : Drawable(ui), Selector(
+			UI::UISelector(ui, 2, [](int pos) -> String {
 				switch (pos) {
 					case 0:
 						return "LED Strip";
 					case 1:
-						return ConfigurationManager::is24Hour ? "24 Hour" : "12 Hour";
+						return Config::is24Hour ? "24 Hour" : "12 Hour";
 					default:
 						return "";
 				}
@@ -95,7 +95,7 @@ public:
 	void buttonEvent(ButtonManager::Button b) override;
 
 private:
-	UIManager::UISelector Selector;
+	UI::UISelector Selector;
 	enum class CurrentDisplay {
 		MENU,
 		LED_STRIP
@@ -106,9 +106,9 @@ private:
 
 class Locations : public Drawable {
 public:
-	explicit Locations(UIManager *ui) : Drawable(ui), Selector(
-			UIManager::UISelector(ui, ConfigurationManager::getLocationCount(), [](int pos) {
-				return UIManager::UISelector::ListItem{ConfigurationManager::getLocation(pos).name, "5451mi"};
+	explicit Locations(UI *ui) : Drawable(ui), Selector(
+			UI::UISelector(ui, Config::getLocationCount(), [](int pos) {
+				return UI::UISelector::ListItem{Config::getLocation(pos).name, "5451mi"};
 			})), l(ui) {};
 
 	void enter(vl::Func<void()> exitCB) override;
@@ -116,7 +116,7 @@ public:
 	void buttonEvent(ButtonManager::Button b) override;
 
 private:
-	UIManager::UISelector Selector;
+	UI::UISelector Selector;
 	enum class CurrentDisplay {
 		MENU,
 		LED_STRIP

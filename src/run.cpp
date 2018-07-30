@@ -27,14 +27,14 @@
 #define LAST_SENTENCE_IN_INTERVAL NMEAGPS::NMEA_GST
 
 #include <NMEAGPS.h>
-#include "UIManager.h"
+#include "UI.h"
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 #include <FastLED.h>
 #include <SPI.h>
 #include <Wire.h>
 #include "wiring_private.h"
-#include "EffectManager.h"
-#include "ConfigurationManager.h"
+#include "LEDController.h"
+#include "Config.h"
 #include "UIMenu.h"
 
 NMEAGPS gps;
@@ -57,7 +57,7 @@ void SERCOM2_Handler() {
 				fix = fixStore;
 				// If the time & date are correct from the GPS, update them
 				// (fix.dateTime_cs is used to make sure that the clock is only updated once per second).
-				if (fix.valid.time && fix.valid.date && fix.dateTime_cs == 0) TimeManager::setTime(fix.dateTime);
+				if (fix.valid.time && fix.valid.date && fix.dateTime_cs == 0) Time::setTime(fix.dateTime);
 				// And reset the internal data
 				fixStore.init();
 				// Mark the data as ready
@@ -72,12 +72,12 @@ void SERCOM2_Handler() {
 #define NEOPIXEL_DATA_PIN 11
 //CRGB leds[NUM_LEDS];
 Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
-EffectManager e(&strip, NUM_LEDS);
+LEDController e(&strip, NUM_LEDS);
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
-UIManager ui(&u8g2);
+UI ui(&u8g2);
 
-UIManager::UIMain l(&ui);
+UI::UIMain l(&ui);
 
 void setup() {
 	GPSPort.begin(115200);
@@ -88,8 +88,8 @@ void setup() {
 	//LEDS.addLeds<WS2812B, NEOPIXEL_DATA_PIN, GRB>(leds, NUM_LEDS);
 	//LEDS.setBrightness(84);
 	strip.begin();
-	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
-	e.setEffect(EffectManager::rainbow);
+	strip.setBrightness(Config::LEDStripBrightness);
+	e.setEffect(LEDController::rainbow);
 	ButtonManager::init();
 
 	ui.setTitle("Locations");
@@ -116,13 +116,13 @@ void loop() {
 		SerialUSB.print(F(", Heading: "));
 		if (fix.valid.heading) SerialUSB.print(fix.heading());
 		SerialUSB.println();
-		SerialUSB.println(ConfigurationManager::formatAsTracklog(fix));
+		SerialUSB.println(Config::formatAsTracklog(fix));
 		l.updateFix(fix);
 		hasFix = false;
 	}
 	ui.show();
 	e.show();
-	if (ConfigurationManager::hasTime) ui.setTitle(TimeManager::formatTime());
-	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
+	if (Config::hasTime) ui.setTitle(Time::formatTime());
+	strip.setBrightness(Config::LEDStripBrightness);
 //	l.buttonEvent(ButtonManager::getButtons());
 }

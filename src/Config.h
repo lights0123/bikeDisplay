@@ -25,7 +25,7 @@
 #include <Timezone.h>
 #include <GPSfix.h>
 
-namespace ConfigurationManager {
+namespace Config {
 
 	struct Location {
 		NeoGPS::Location_t location;
@@ -109,21 +109,21 @@ namespace ConfigurationManager {
 	}
 };
 
-namespace TimeManager {
+namespace Time {
 	extern ::TimeChangeRule timeDaylight;
 	extern ::TimeChangeRule timeStandard;
 	extern ::Timezone timezone;
 
 	static void updateRules() {
 		timeDaylight.offset =
-				ConfigurationManager::timezoneOffset + (ConfigurationManager::useDaylightSavings ? 60 : 0);
-		timeStandard.offset = ConfigurationManager::timezoneOffset;
+				Config::timezoneOffset + (Config::useDaylightSavings ? 60 : 0);
+		timeStandard.offset = Config::timezoneOffset;
 		timezone.setRules(timeDaylight, timeStandard);
 	}
 
 	static void setTime(NeoGPS::time_t dt) {
 		::setTime(dt.hours, dt.minutes, dt.seconds, dt.date, dt.month, dt.year);
-		ConfigurationManager::hasTime = true;
+		Config::hasTime = true;
 	};
 
 	static int hours() {
@@ -167,7 +167,7 @@ namespace TimeManager {
 	}
 
 	static String formatTime(time_t time) {
-		if (ConfigurationManager::is24Hour) {
+		if (Config::is24Hour) {
 			return String(hours()) + String(":") + String(minutes() < 10 ? "0" : "") + String(minutes());
 		} else {
 			return String(String(hours12()) + String(":") + String(minutes() < 10 ? "0" : "") + String(minutes()) +

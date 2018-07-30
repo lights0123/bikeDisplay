@@ -17,13 +17,14 @@
 */
 #include <FastLED.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
+#include <functional-vlpp.h>
 
 #pragma once
 
 
-class EffectManager {
+class LEDController {
 public:
-	EffectManager(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0) : leds(leds),
+	LEDController(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0) : leds(leds),
 	                                                                                        numLEDs(numLEDs),
 	                                                                                        offset(offset) {
 		// Prevent calling an undefined pointer if setEffect is not called
@@ -32,7 +33,7 @@ public:
 
 	void show();
 
-	void setEffect(void (*effectFunction)(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t, uint16_t));
+	void setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction);
 
 	// Effects
 	static void blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
@@ -46,6 +47,6 @@ private:
 	uint16_t numLEDs;
 	uint16_t offset;
 
-	void (*effectFunction)(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t);
+	vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction;
 };
 

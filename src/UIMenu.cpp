@@ -59,11 +59,11 @@ ButtonManager::ButtonPress ButtonManager::longPressHelper(Button button) {
 void LEDStripBriSetting::enter(vl::Func<void()> exitCB) {
 	exit = exitCB;
 	slider
-			.setValue(ConfigurationManager::LEDStripBrightness)
+			.setValue(Config::LEDStripBrightness)
 			.setBounds(0, 255)
 			.setSuffix("")
 			.onChange([](int val) {
-				ConfigurationManager::LEDStripBrightness = val;
+				Config::LEDStripBrightness = val;
 			});
 	ui->setType(&slider);
 }
@@ -113,7 +113,7 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 				});
 				break;
 			case 1:
-				ConfigurationManager::is24Hour = !ConfigurationManager::is24Hour;
+				Config::is24Hour = !Config::is24Hour;
 				break;
 			default:
 				break;

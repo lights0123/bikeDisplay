@@ -16,18 +16,18 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "EffectManager.h"
+#include "LEDController.h"
 
-void EffectManager::show() {
+void LEDController::show() {
 	effectFunction(leds, numLEDs, offset);
 	leds->show();
 }
 
-void EffectManager::setEffect(void (*effectFunctionIn)(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)) {
+void LEDController::setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunctionIn) {
 	effectFunction = effectFunctionIn;
 }
 
-void EffectManager::blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
+void LEDController::blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
 	// Number of flashes (on and off) per minute
 	const int desiredFrequency = 80;
 	const uint32_t yellow = Adafruit_NeoPixel_ZeroDMA::Color(255, 255, 0);
@@ -36,11 +36,11 @@ void EffectManager::blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, u
 	else allColor(leds, numLEDs);
 }
 
-void EffectManager::allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset, uint32_t color) {
+void LEDController::allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset, uint32_t color) {
 	for (uint16_t i = offset; i < numLEDs + offset; i++) leds->setPixelColor(i, color);
 }
 
-void EffectManager::rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
+void LEDController::rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
 	static uint8_t startIndex = 0;
 	static unsigned long lastTime = 0;
 	startIndex+=(millis() - lastTime) / 10;

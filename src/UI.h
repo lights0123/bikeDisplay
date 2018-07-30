@@ -27,23 +27,23 @@ enum UI_TYPES {
 	UI_MAIN
 };
 
-class UIManager {
+class UI {
 public:
 
 	class UIType {
 	public:
-		explicit UIType(UIManager *manager) : manager(manager), display(manager->display),
+		explicit UIType(UI *manager) : manager(manager), display(manager->display),
 		                                      displayWidth(display->getDisplayWidth()),
 		                                      displayHeight(display->getDisplayHeight()) {};
 
 		virtual void show() {};
 	protected:
-		UIManager *manager;
+		UI *manager;
 		U8G2 *display;
 		int displayWidth, displayHeight;
 	};
 
-	explicit UIManager(U8G2 *display) : display(display), displayWidth(display->getDisplayWidth()),
+	explicit UI(U8G2 *display) : display(display), displayWidth(display->getDisplayWidth()),
 	                                    displayHeight(display->getDisplayHeight()) {}
 
 	void setTitle(String titleIn);
@@ -69,7 +69,7 @@ public:
 		 * @param positions Number of positions in the selector
 		 * @param cb A callback that is given a zero-indexed integer that returns a String of the desired output
 		 */
-		UISelector(UIManager *manager, int positions, vl::Func<ListItem(int)> cb) : UIType(manager),
+		UISelector(UI *manager, int positions, vl::Func<ListItem(int)> cb) : UIType(manager),
 		                                                                            positions(positions), cb(cb) {};
 
 		void show() override;
@@ -93,7 +93,7 @@ public:
 	class UIMain : public UIType {
 	public:
 
-		UIMain(UIManager *manager) : UIType(manager) {};
+		UIMain(UI *manager) : UIType(manager) {};
 
 		void show() override;
 
@@ -119,7 +119,7 @@ public:
 
 	class UISlider : public UIType {
 	public:
-		UISlider(UIManager *manager, String name, int value) : UIType(manager),
+		UISlider(UI *manager, String name, int value) : UIType(manager),
 		                                                       value(value), name(name), cbChange([](int) {}) {};
 
 		/**

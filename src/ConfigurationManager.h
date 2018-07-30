@@ -47,6 +47,10 @@ namespace ConfigurationManager {
 			return kilometersTo(otherLocation) * 1000;
 		}
 
+		int degreesTo(NeoGPS::Location_t otherLocation){
+			return location.BearingToDegrees(otherLocation);
+		}
+
 		String distanceString(NeoGPS::Location_t otherLocation){
 			const float miles = milesTo(otherLocation);
 			if(miles >= 10) return String(miles, 0) + " mi";

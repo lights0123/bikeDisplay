@@ -195,7 +195,7 @@ void UIManager::UIMain::show() {
 
 	// Right Half
 	{
-		const u8g2_uint_t leftCenter = displayWidth / 4 * 3;
+		const u8g2_uint_t rightCenter = displayWidth / 4 * 3;
 		if (fix.valid.location) {
 			if (ConfigurationManager::currentNav.name == "") {
 				if (ConfigurationManager::getLocationCount() > 0) {
@@ -208,14 +208,28 @@ void UIManager::UIMain::show() {
 				}
 			} else {
 				// Currently navigating
+				const int heading = 0 - ConfigurationManager::currentNav.degreesTo(fix.location);
+				const u8g2_uint_t arrowVertCenter = (displayHeight - UIFontHeight - titleHeight) / 2 + titleHeight;
+				const int radius = min((displayHeight - UIFontHeight - titleHeight) / 2 - 2, displayWidth / 4);
+				const int arrowHead = 5;
+				const int arrowHeadAngle = 35;
 
+				const u8g2_uint_t x = radius * sinDeg(heading) + rightCenter;
+				const u8g2_uint_t y = radius * cosDeg(heading) + arrowVertCenter;
 
+				display->drawLine(x, y, radius * sinDeg(heading + 180) + rightCenter,
+				                  radius * cosDeg(heading + 180) + arrowVertCenter);
+
+				display->drawLine(x, y, arrowHead * sinDeg(heading + 180 + arrowHeadAngle) + x,
+				                  arrowHead * cosDeg(heading + 180 + arrowHeadAngle) + y);
+				display->drawLine(x, y, arrowHead * sinDeg(heading + 180 - arrowHeadAngle) + x,
+				                  arrowHead * cosDeg(heading + 180 - arrowHeadAngle) + y);
 			}
 		}
 
 		if (fix.valid.speed) {
 			String speed = String(fix.speed_mph()) + " MPH";
-			display->setCursor(leftCenter - display->getUTF8Width(speed.c_str()) / 2, displayHeight);
+			display->setCursor(rightCenter - display->getUTF8Width(speed.c_str()) / 2, displayHeight);
 			display->print(speed);
 		}
 	}

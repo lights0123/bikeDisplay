@@ -79,14 +79,16 @@ private:
 class Preferences : public Drawable {
 public:
 	explicit Preferences(UI *ui) : Drawable(ui), Selector(
-			UI::UISelector(ui, 2, [](int pos) -> String {
+			UI::UISelector(ui, 3, [](int pos) -> UI::UISelector::ListItem {
 				switch (pos) {
 					case 0:
-						return "LED Strip";
+						return UI::UISelector::ListReturn();
 					case 1:
-						return Config::is24Hour ? "24 Hour" : "12 Hour";
+						return UI::UISelector::ListItem("LED Strip");
+					case 2:
+						return UI::UISelector::ListItem(Config::is24Hour ? "24 Hour" : "12 Hour");
 					default:
-						return "";
+						return UI::UISelector::ListItem("");
 				}
 			})), l(ui) {};
 
@@ -107,9 +109,8 @@ private:
 class Locations : public Drawable {
 public:
 	explicit Locations(UI *ui) : Drawable(ui), Selector(
-			UI::UISelector(ui, Config::getLocationCount(), [](int pos) {
-				return UI::UISelector::ListItem{Config::getLocation(pos).name, "5451mi"};
-			})), l(ui) {};
+			UI::UISelector(ui, Config::getLocationCount() + 1,
+			               [](int loc) { return loc == 0 ? UI::UISelector::ListReturn() : getLocation(loc - 1); })) {};
 
 	void enter(vl::Func<void()> exitCB) override;
 
@@ -117,10 +118,30 @@ public:
 
 private:
 	UI::UISelector Selector;
+
+	static UI::UISelector::ListItem getLocation(int pos) {
+		const auto loc = Config::getLocation(pos);
+		return UI::UISelector::ListItem{loc.name,
+		                                Config::fix.valid.location ? loc.distanceString(Config::fix.location) : ""};
+	}
+};
+
+class MainScreen : public Drawable {
+public:
+	explicit MainScreen(UI *ui) : Drawable(ui), screen(ui), locationScreen(ui), preferencesScreen(ui) {};
+
+	void enter(vl::Func<void()> exitCB) override;
+
+	void buttonEvent(ButtonManager::Button b) override;
+
+private:
+	UI::UIMain screen;
+	Locations locationScreen;
+	Preferences preferencesScreen;
 	enum class CurrentDisplay {
-		MENU,
-		LED_STRIP
+		MAIN,
+		LOCATIONS,
+		PREFERENCES
 	};
-	CurrentDisplay currentDisplay = CurrentDisplay::MENU;
-	LEDStripBriSetting l;
+	CurrentDisplay currentDisplay = CurrentDisplay::MAIN;
 };

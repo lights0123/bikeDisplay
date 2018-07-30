@@ -71,7 +71,7 @@ void LEDStripBriSetting::enter(vl::Func<void()> exitCB) {
 void LEDStripBriSetting::buttonEvent(ButtonManager::Button b) {
 	using namespace ButtonManager;
 
-	ButtonPress buttonPress = ButtonManager::longPressHelper(b);
+	ButtonPress buttonPress = longPressHelper(b);
 	Button button = buttonPress.button;
 	unsigned long changeFreq = ceil((millis() - buttonPress.startTouch + 1) / 1000.0);
 
@@ -98,7 +98,7 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 		default:
 			break;
 	}
-	Button button = ButtonManager::longPressHelper(b).button;
+	Button button = longPressHelper(b).button;
 
 	if (button == Button::noButton) return;
 	if (button == Button::upPin) Selector.moveUp();
@@ -106,13 +106,16 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 	else if (button == Button::selectPin) {
 		switch (Selector.getPosition()) {
 			case 0:
+				exit();
+				break;
+			case 1:
 				currentDisplay = CurrentDisplay::LED_STRIP;
 				l.enter([this]() {
 					currentDisplay = CurrentDisplay::MENU;
 					ui->setType(&Selector);
 				});
 				break;
-			case 1:
+			case 2:
 				Config::is24Hour = !Config::is24Hour;
 				break;
 			default:
@@ -132,13 +135,52 @@ void Locations::enter(vl::Func<void()> exitCB) {
 void Locations::buttonEvent(ButtonManager::Button b) {
 	using namespace ButtonManager;
 
-	Button button = ButtonManager::longPressHelper(b).button;
+	Button button = longPressHelper(b).button;
 
 	if (button == Button::noButton) return;
 	if (button == Button::upPin) Selector.moveUp();
 	else if (button == Button::downPin) Selector.moveDown();
+	else if (button == Button::leftPin) exit();
 	else if (button == Button::selectPin) {
-		exit();
-		return;
+		if (Selector.getPosition() == 0) exit();
+		else {
+			Config::currentNav = Config::getLocation(Selector.getPosition() - 1);
+			exit();
+			return;
+		}
+	}
+}
+
+void MainScreen::enter(vl::Func<void()> exitCB) {
+	exit = exitCB;
+	ui->setType(&screen);
+}
+
+void MainScreen::buttonEvent(ButtonManager::Button b) {
+	using namespace ButtonManager;
+
+	switch (currentDisplay) {
+		case CurrentDisplay::PREFERENCES:
+			return preferencesScreen.buttonEvent(b);
+		case CurrentDisplay::LOCATIONS:
+			return locationScreen.buttonEvent(b);
+		default:
+			break;
+	}
+	Button button = longPressHelper(b).button;
+
+	if (button == Button::noButton) return;
+	if (button == Button::selectPin) {
+		currentDisplay = CurrentDisplay::LOCATIONS;
+		locationScreen.enter([this]() {
+			currentDisplay = CurrentDisplay::MAIN;
+			ui->setType(&screen);
+		});
+	} else if (button == Button::rightPin) {
+		currentDisplay = CurrentDisplay::PREFERENCES;
+		preferencesScreen.enter([this]() {
+			currentDisplay = CurrentDisplay::MAIN;
+			ui->setType(&screen);
+		});
 	}
 }

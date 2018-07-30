@@ -36,7 +36,7 @@ void UI::show() {
 	display->setCursor(0, titleHeight);
 	display->print(title);
 	String batteryPercentage = String(Config::batteryLevel) + '%';
-	display->setCursor(displayWidth - display->getUTF8Width(batteryPercentage.c_str()), titleHeight);
+	display->setCursor(displayWidth - display->getStrWidth(batteryPercentage.c_str()), titleHeight);
 	display->print(batteryPercentage);
 	display->setFont(UIFont);
 	currentDisplay->show();
@@ -62,9 +62,18 @@ void UI::UISelector::show() {
 		}
 		display->setCursor(0, top);
 		ListItem l = cb(position);
+		if(l.isReturn){
+			display->setFont(u8g2_font_8x13_t_symbols);
+			display->drawGlyph(0, top, 0x21a9);
+
+			display->setFont(UIFont);
+			display->setCursor(11,top);
+			display->print("Return");
+			return;
+		}
 		display->print(l.leftSide);
 		if (l.rightSide != "") {
-			display->setCursor(displayWidth - progressBarWidth - display->getUTF8Width(l.rightSide.c_str()), top);
+			display->setCursor(displayWidth - progressBarWidth - display->getStrWidth(l.rightSide.c_str()), top);
 			display->print(l.rightSide);
 		}
 	};
@@ -130,12 +139,12 @@ void UI::UISlider::show() {
 	const int barDistanceFromLeft = displayWidth / 2 - barWidth / 2;
 	const int valueWidth = (value - min) / (double) (max - min) * barWidth;
 
-	const int nameWidth = display->getUTF8Width(name.c_str());
+	const int nameWidth = display->getStrWidth(name.c_str());
 	const int nameDistanceFromTop = barDistanceFromTop / 2 + titleHeight / 2 + UIFontHeight / 2;
 
 	String valueString = String(value) + suffix;
 
-	const int valueStringWidth = display->getUTF8Width(valueString.c_str());
+	const int valueStringWidth = display->getStrWidth(valueString.c_str());
 	const int valueStringDistanceFromTop = (barDistanceFromTop + barHeight + UIFontHeight + displayHeight) / 2;
 
 	display->setCursor((displayWidth - nameWidth) / 2, nameDistanceFromTop);
@@ -162,6 +171,8 @@ void UI::UISlider::decrease(int amount) {
 }
 
 void UI::UIMain::show() {
+	using Config::fix;
+	using Config::currentNav;
 	/*
 	 * Layout:
 	 * +---------+------------+
@@ -173,7 +184,7 @@ void UI::UIMain::show() {
 
 	// Left Half
 	{
-		bool displayDistance = Config::currentNav.name != "" && fix.valid.location;
+		bool displayDistance = currentNav.name != "" && fix.valid.location;
 		if (fix.valid.heading) {
 			const u8g2_uint_t leftCenter = displayWidth / 4;
 			const int heading = fix.heading() + 180;
@@ -197,7 +208,7 @@ void UI::UIMain::show() {
 		}
 		if (displayDistance) {
 			display->setCursor(0, displayHeight);
-			display->print(Config::currentNav.distanceString(fix.location));
+			display->print(currentNav.distanceString(fix.location));
 		}
 	}
 
@@ -205,7 +216,7 @@ void UI::UIMain::show() {
 	{
 		const u8g2_uint_t rightCenter = displayWidth / 4 * 3;
 		if (fix.valid.location) {
-			if (Config::currentNav.name == "") {
+			if (currentNav.name == "") {
 				if (Config::getLocationCount() > 0) {
 					// Not currently navigating
 					String distanceMessage = Config::getLocation(0).distanceString(fix.location) + " to";
@@ -217,7 +228,7 @@ void UI::UIMain::show() {
 			} else {
 				// Currently navigating
 				if (fix.valid.heading) {
-					const int heading = fix.heading() - Config::currentNav.degreesTo(fix.location);
+					const int heading = fix.heading() - currentNav.degreesTo(fix.location);
 					const u8g2_uint_t arrowVertCenter = (displayHeight - UIFontHeight - titleHeight) / 2 + titleHeight;
 					const int radius = min((displayHeight - UIFontHeight - titleHeight) / 2 - 2, displayWidth / 4);
 					const int arrowHead = 5;
@@ -239,7 +250,7 @@ void UI::UIMain::show() {
 
 		if (fix.valid.speed) {
 			String speed = String(fix.speed_mph()) + " MPH";
-			display->setCursor(rightCenter - display->getUTF8Width(speed.c_str()) / 2, displayHeight);
+			display->setCursor(rightCenter - display->getStrWidth(speed.c_str()) / 2, displayHeight);
 			display->print(speed);
 		}
 	}

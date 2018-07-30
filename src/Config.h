@@ -31,34 +31,34 @@ namespace Config {
 		NeoGPS::Location_t location;
 		String name;
 
-		float milesTo(NeoGPS::Location_t otherLocation) {
+		float milesTo(NeoGPS::Location_t otherLocation) const {
 			return location.DistanceMiles(otherLocation);
 		}
 
-		float feetTo(NeoGPS::Location_t otherLocation) {
+		float feetTo(NeoGPS::Location_t otherLocation) const {
 			return milesTo(otherLocation) * 5280;
 		}
 
-		float kilometersTo(NeoGPS::Location_t otherLocation) {
+		float kilometersTo(NeoGPS::Location_t otherLocation) const {
 			return location.DistanceKm(otherLocation);
 		}
 
-		float metersTo(NeoGPS::Location_t otherLocation) {
+		float metersTo(NeoGPS::Location_t otherLocation) const {
 			return kilometersTo(otherLocation) * 1000;
 		}
 
-		int degreesTo(NeoGPS::Location_t otherLocation){
+		int degreesTo(NeoGPS::Location_t otherLocation) const {
 			return location.BearingToDegrees(otherLocation);
 		}
 
-		String distanceString(NeoGPS::Location_t otherLocation){
+		String distanceString(NeoGPS::Location_t otherLocation) const {
 			const float miles = milesTo(otherLocation);
-			if(miles >= 10) return String(miles, 0) + " mi";
-			if(miles >= 0.5) return String(miles, 1) + " mi";
+			if (miles >= 10) return String(miles, 0) + " mi";
+			if (miles >= 0.5) return String(miles, 1) + " mi";
 			const int feet = miles * 5280;
-			if(feet >= 500) return String(round(feet/100)*100) + " ft";
-			if(feet >= 100) return String(round(feet/50)*50) + " ft";
-			return String(round(feet/10)*10) + " ft";
+			if (feet >= 500) return String(round(feet / 100) * 100) + " ft";
+			if (feet >= 100) return String(round(feet / 50) * 50) + " ft";
+			return String(round(feet / 10) * 10) + " ft";
 		}
 	};
 
@@ -66,6 +66,7 @@ namespace Config {
 	extern bool hasTime;
 	extern int batteryLevel;
 	extern Location currentNav;
+	extern gps_fix fix;
 	// Saved
 	extern bool is24Hour;
 	extern bool useDaylightSavings;
@@ -77,6 +78,7 @@ namespace Config {
 	void load();
 
 	static int getLocationCount() {
+		// TODO: read from SD card
 		return 4;
 	}
 

@@ -38,8 +38,6 @@
 #include "UIMenu.h"
 
 NMEAGPS gps;
-gps_fix fix;
-gps_fix fixStore;
 volatile bool hasFix = false;
 
 Uart GPSPort(&sercom2, 3, 4, SERCOM_RX_PAD_1, UART_TX_PAD_0);
@@ -50,9 +48,11 @@ void SERCOM2_Handler() {
 		// Read it and decode. If finished decoding a sentence, then...
 		if (gps.decode(sercom2.readDataUART()) == NMEAGPS::DECODE_COMPLETED) {
 			// Add the received sentence to the GPS data
+			static gps_fix fixStore;
 			fixStore |= gps.fix();
 			// If it's the last sentence in the block, then
 			if (gps.nmeaMessage == LAST_SENTENCE_IN_INTERVAL) {
+				using Config::fix;
 				// Copy the internal data to what's accessed externally
 				fix = fixStore;
 				// If the time & date are correct from the GPS, update them
@@ -77,7 +77,7 @@ LEDController e(&strip, NUM_LEDS);
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 UI ui(&u8g2);
 
-UI::UIMain l(&ui);
+MainScreen l(&ui);
 
 void setup() {
 	GPSPort.begin(115200);
@@ -93,8 +93,8 @@ void setup() {
 	ButtonManager::init();
 
 	ui.setTitle("Locations");
-//	l.enter([](){});
-	ui.setType(&l);
+	l.enter([](){});
+//	ui.setType(&l);
 	ui.show();
 }
 
@@ -102,6 +102,7 @@ void loop() {
 //	while(SerialUSB.available()) GPSPort.write(SerialUSB.read());
 //	while(GPSPort.available()) SerialUSB.write(GPSPort.read());
 	if (hasFix) {
+		using namespace Config;
 		SerialUSB.print(F("Location: "));
 		if (fix.valid.location) {
 			SerialUSB.print(fix.latitude(), 6);
@@ -117,12 +118,11 @@ void loop() {
 		if (fix.valid.heading) SerialUSB.print(fix.heading());
 		SerialUSB.println();
 		SerialUSB.println(Config::formatAsTracklog(fix));
-		l.updateFix(fix);
 		hasFix = false;
 	}
 	ui.show();
 	e.show();
 	if (Config::hasTime) ui.setTitle(Time::formatTime());
 	strip.setBrightness(Config::LEDStripBrightness);
-//	l.buttonEvent(ButtonManager::getButtons());
+	l.buttonEvent(ButtonManager::getButtons());
 }

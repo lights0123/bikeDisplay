@@ -22,6 +22,7 @@
 int Config::batteryLevel = 100;
 bool Config::hasTime = false;
 Config::Location Config::currentNav{NeoGPS::Location_t(), ""};
+gps_fix Config::fix;
 
 uint8_t Config::LEDStripBrightness = 100;
 bool Config::is24Hour = false;

@@ -33,8 +33,8 @@ public:
 	class UIType {
 	public:
 		explicit UIType(UI *manager) : manager(manager), display(manager->display),
-		                                      displayWidth(display->getDisplayWidth()),
-		                                      displayHeight(display->getDisplayHeight()) {};
+		                               displayWidth(display->getDisplayWidth()),
+		                               displayHeight(display->getDisplayHeight()) {};
 
 		virtual void show() {};
 	protected:
@@ -44,7 +44,7 @@ public:
 	};
 
 	explicit UI(U8G2 *display) : display(display), displayWidth(display->getDisplayWidth()),
-	                                    displayHeight(display->getDisplayHeight()) {}
+	                             displayHeight(display->getDisplayHeight()) {}
 
 	void setTitle(String titleIn);
 
@@ -56,10 +56,18 @@ public:
 	public:
 		struct ListItem {
 			String leftSide, rightSide = "";
+			// Used to set if the menu item should say "Return" with a back-pointing arrow.
+			bool isReturn = false;
 
 			ListItem(String leftSide) : leftSide(leftSide) {};
 
 			ListItem(String leftSide, String rightSide) : leftSide(leftSide), rightSide(rightSide) {};
+		protected:
+			ListItem() : isReturn(true) {};
+		};
+
+		struct ListReturn : ListItem {
+			ListReturn() : ListItem() {};
 		};
 
 		/**
@@ -70,7 +78,7 @@ public:
 		 * @param cb A callback that is given a zero-indexed integer that returns a String of the desired output
 		 */
 		UISelector(UI *manager, int positions, vl::Func<ListItem(int)> cb) : UIType(manager),
-		                                                                            positions(positions), cb(cb) {};
+		                                                                     positions(positions), cb(cb) {};
 
 		void show() override;
 
@@ -93,34 +101,28 @@ public:
 	class UIMain : public UIType {
 	public:
 
-		UIMain(UI *manager) : UIType(manager) {};
+		explicit UIMain(UI *manager) : UIType(manager) {};
 
 		void show() override;
-
-		void updateFix(gps_fix f) {
-			fix = f;
-		}
 
 	private:
 		double degToRad(int deg) {
 			return deg * PI / 180;
 		}
 
-		double sinDeg(int deg){
+		double sinDeg(int deg) {
 			return sin(degToRad(deg));
 		}
 
-		double cosDeg(int deg){
+		double cosDeg(int deg) {
 			return cos(degToRad(deg));
 		}
-
-		gps_fix fix;
 	};
 
 	class UISlider : public UIType {
 	public:
 		UISlider(UI *manager, String name, int value) : UIType(manager),
-		                                                       value(value), name(name), cbChange([](int) {}) {};
+		                                                value(value), name(name), cbChange([](int) {}) {};
 
 		/**
 		 * Sets the boundaries for the slider.

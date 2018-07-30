@@ -173,12 +173,16 @@ void UIManager::UIMain::show() {
 
 	// Left Half
 	{
+		bool displayDistance = ConfigurationManager::currentNav.name != "" && fix.valid.location;
 		if (fix.valid.heading) {
 			const u8g2_uint_t leftCenter = displayWidth / 4;
 			const int heading = fix.heading() + 180;
+			const int distanceSpace = displayDistance ? UIFontHeight + 4 : 0;
 			// Make sure that there is enough room. Get the smaller of the vertical and horizontal space.
-			const int radius = min((displayHeight - titleHeight - 2 - UIFontHeight) / 2, displayWidth / 4);
-			const u8g2_uint_t verticalCompassCenter = (displayHeight + titleHeight) / 2 + UIFontHeight / 2;
+			const int radius = min((displayHeight - titleHeight - 2 - UIFontHeight) / 2 - distanceSpace / 2,
+			                       displayWidth / 4);
+			const u8g2_uint_t verticalCompassCenter =
+					(displayHeight + titleHeight) / 2 + UIFontHeight / 2 - distanceSpace / 2 + 1;
 			display->setCursor(radius * sinDeg(heading) + leftCenter, radius * cosDeg(heading) + verticalCompassCenter);
 			display->print('N');
 			display->setCursor(radius * sinDeg(heading - 90) + leftCenter,
@@ -190,6 +194,10 @@ void UIManager::UIMain::show() {
 			display->setCursor(radius * sinDeg(heading - 270) + leftCenter,
 			                   radius * cosDeg(heading - 270) + verticalCompassCenter);
 			display->print('W');
+		}
+		if (displayDistance) {
+			display->setCursor(0, displayHeight);
+			display->print(ConfigurationManager::currentNav.distanceString(fix.location));
 		}
 	}
 
@@ -208,22 +216,24 @@ void UIManager::UIMain::show() {
 				}
 			} else {
 				// Currently navigating
-				const int heading = 0 - ConfigurationManager::currentNav.degreesTo(fix.location);
-				const u8g2_uint_t arrowVertCenter = (displayHeight - UIFontHeight - titleHeight) / 2 + titleHeight;
-				const int radius = min((displayHeight - UIFontHeight - titleHeight) / 2 - 2, displayWidth / 4);
-				const int arrowHead = 5;
-				const int arrowHeadAngle = 35;
+				if (fix.valid.heading) {
+					const int heading = fix.heading() - ConfigurationManager::currentNav.degreesTo(fix.location);
+					const u8g2_uint_t arrowVertCenter = (displayHeight - UIFontHeight - titleHeight) / 2 + titleHeight;
+					const int radius = min((displayHeight - UIFontHeight - titleHeight) / 2 - 2, displayWidth / 4);
+					const int arrowHead = 5;
+					const int arrowHeadAngle = 35;
 
-				const u8g2_uint_t x = radius * sinDeg(heading) + rightCenter;
-				const u8g2_uint_t y = radius * cosDeg(heading) + arrowVertCenter;
+					const u8g2_uint_t x = radius * sinDeg(heading) + rightCenter;
+					const u8g2_uint_t y = radius * cosDeg(heading) + arrowVertCenter;
 
-				display->drawLine(x, y, radius * sinDeg(heading + 180) + rightCenter,
-				                  radius * cosDeg(heading + 180) + arrowVertCenter);
+					display->drawLine(x, y, radius * sinDeg(heading + 180) + rightCenter,
+					                  radius * cosDeg(heading + 180) + arrowVertCenter);
 
-				display->drawLine(x, y, arrowHead * sinDeg(heading + 180 + arrowHeadAngle) + x,
-				                  arrowHead * cosDeg(heading + 180 + arrowHeadAngle) + y);
-				display->drawLine(x, y, arrowHead * sinDeg(heading + 180 - arrowHeadAngle) + x,
-				                  arrowHead * cosDeg(heading + 180 - arrowHeadAngle) + y);
+					display->drawLine(x, y, arrowHead * sinDeg(heading + 180 + arrowHeadAngle) + x,
+					                  arrowHead * cosDeg(heading + 180 + arrowHeadAngle) + y);
+					display->drawLine(x, y, arrowHead * sinDeg(heading + 180 - arrowHeadAngle) + x,
+					                  arrowHead * cosDeg(heading + 180 - arrowHeadAngle) + y);
+				}
 			}
 		}
 

@@ -80,7 +80,6 @@ UIManager ui(&u8g2);
 UIManager::UIMain l(&ui);
 
 void setup() {
-	while (!SerialUSB);
 	GPSPort.begin(115200);
 	pinPeripheral(3, PIO_SERCOM_ALT);
 	pinPeripheral(4, PIO_SERCOM_ALT);

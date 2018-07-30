@@ -90,6 +90,33 @@ public:
 		vl::Func<ListItem(int)> cb;
 	};
 
+	class UIMain : public UIType {
+	public:
+
+		UIMain(UIManager *manager) : UIType(manager) {};
+
+		void show() override;
+
+		void updateFix(gps_fix f) {
+			fix = f;
+		}
+
+	private:
+		double degToRad(int deg) {
+			return deg * PI / 180;
+		}
+
+		double sinDeg(int deg){
+			return sin(degToRad(deg));
+		}
+
+		double cosDeg(int deg){
+			return cos(degToRad(deg));
+		}
+
+		gps_fix fix;
+	};
+
 	class UISlider : public UIType {
 	public:
 		UISlider(UIManager *manager, String name, int value) : UIType(manager),

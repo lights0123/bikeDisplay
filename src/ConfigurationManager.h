@@ -29,16 +29,35 @@ namespace ConfigurationManager {
 
 	struct Location {
 		NeoGPS::Location_t location;
-		char name[19];
+		String name;
 
 		float milesTo(NeoGPS::Location_t otherLocation) {
 			return location.DistanceMiles(otherLocation);
 		}
 
+		float feetTo(NeoGPS::Location_t otherLocation) {
+			return milesTo(otherLocation) * 5280;
+		}
+
 		float kilometersTo(NeoGPS::Location_t otherLocation) {
 			return location.DistanceKm(otherLocation);
 		}
+
+		float metersTo(NeoGPS::Location_t otherLocation) {
+			return kilometersTo(otherLocation) * 1000;
+		}
+
+		String distanceString(NeoGPS::Location_t otherLocation){
+			const float miles = milesTo(otherLocation);
+			if(miles >= 10) return String(miles, 0) + " mi";
+			if(miles >= 0.5) return String(miles, 1) + " mi";
+			const int feet = miles * 5280;
+			if(feet >= 500) return String(round(feet/100)*100) + " ft";
+			if(feet >= 100) return String(round(feet/50)*50) + " ft";
+			return String(round(feet/10)*10) + " ft";
+		}
 	};
+
 	// Runtime
 	extern bool hasTime;
 	extern int batteryLevel;
@@ -59,8 +78,8 @@ namespace ConfigurationManager {
 
 	static Location getLocation(int loc) {
 		// TODO: read from SD card
-		const Location temp[] = {Location{NeoGPS::Location_t(404381311L, -38196229L), "Madrid"},
-		                         Location{NeoGPS::Location_t(407127000L, -740059000L), "New y"},
+		const Location temp[] = {Location{NeoGPS::Location_t(407127000L, -740059000L), "New York City"},
+		                         Location{NeoGPS::Location_t(404381311L, -38196229L), "Madrid"},
 		                         Location{NeoGPS::Location_t(404381311L, -38196229L), "Madrid"},
 		                         Location{NeoGPS::Location_t(407127000L, -740059000L), "New Yor"}};
 		return temp[loc];
@@ -75,7 +94,7 @@ namespace ConfigurationManager {
 		s += ',';
 		s += fix.valid.time ? (fix.dateTime.hours + c + fix.dateTime.minutes + c + fix.dateTime.seconds) : ",,";
 		s += ',';
-		s += fix.valid.location ? (String(fix.latitude(), 6) + c + String(fix.longitude(),6)) : ",";
+		s += fix.valid.location ? (String(fix.latitude(), 6) + c + String(fix.longitude(), 6)) : ",";
 		s += ',';
 		s += fix.valid.altitude ? String(fix.altitude_ft()) : "";
 		s += ',';

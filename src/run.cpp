@@ -77,7 +77,7 @@ EffectManager e(&strip, NUM_LEDS);
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 UIManager ui(&u8g2);
 
-Locations l(&ui);
+UIManager::UIMain l(&ui);
 
 void setup() {
 	while (!SerialUSB);
@@ -94,7 +94,8 @@ void setup() {
 	ButtonManager::init();
 
 	ui.setTitle("Locations");
-	l.enter([](){});
+//	l.enter([](){});
+	ui.setType(&l);
 	ui.show();
 }
 
@@ -117,11 +118,12 @@ void loop() {
 		if (fix.valid.heading) SerialUSB.print(fix.heading());
 		SerialUSB.println();
 		SerialUSB.println(ConfigurationManager::formatAsTracklog(fix));
+		l.updateFix(fix);
 		hasFix = false;
 	}
 	ui.show();
 	e.show();
 	if (ConfigurationManager::hasTime) ui.setTitle(TimeManager::formatTime());
 	strip.setBrightness(ConfigurationManager::LEDStripBrightness);
-	l.buttonEvent(ButtonManager::getButtons());
+//	l.buttonEvent(ButtonManager::getButtons());
 }

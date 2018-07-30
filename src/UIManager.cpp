@@ -35,9 +35,9 @@ void UIManager::show() {
 	display->setDrawColor(1);
 	display->setCursor(0, titleHeight);
 	display->print(title);
-	display->setCursor(displayWidth - display->getUTF8Width((String(ConfigurationManager::batteryLevel) + '%').c_str()),
-	                   titleHeight);
-	display->print(String(ConfigurationManager::batteryLevel) + '%');
+	String batteryPercentage = String(ConfigurationManager::batteryLevel) + '%';
+	display->setCursor(displayWidth - display->getUTF8Width(batteryPercentage.c_str()), titleHeight);
+	display->print(batteryPercentage);
 	display->setFont(UIFont);
 	currentDisplay->show();
 	display->sendBuffer();
@@ -159,4 +159,64 @@ void UIManager::UISlider::decrease(int amount) {
 	int oldVal = value;
 	value = max(min, value - amount);
 	if (value != oldVal) cbChange(value);
+}
+
+void UIManager::UIMain::show() {
+	/*
+	 * Layout:
+	 * +---------+------------+
+	 * | Current | Navigation |
+	 * + Heading +------------+
+	 * |         | Speed      |
+	 * +---------+------------+
+	 */
+
+	// Left Half
+	{
+		if (fix.valid.heading) {
+			const u8g2_uint_t leftCenter = displayWidth / 4;
+			const int heading = fix.heading() + 180;
+			// Make sure that there is enough room. Get the smaller of the vertical and horizontal space.
+			const int radius = min((displayHeight - titleHeight - 2 - UIFontHeight) / 2, displayWidth / 4);
+			const u8g2_uint_t verticalCompassCenter = (displayHeight + titleHeight) / 2 + UIFontHeight / 2;
+			display->setCursor(radius * sinDeg(heading) + leftCenter, radius * cosDeg(heading) + verticalCompassCenter);
+			display->print('N');
+			display->setCursor(radius * sinDeg(heading - 90) + leftCenter,
+			                   radius * cosDeg(heading - 90) + verticalCompassCenter);
+			display->print('E');
+			display->setCursor(radius * sinDeg(heading - 180) + leftCenter,
+			                   radius * cosDeg(heading - 180) + verticalCompassCenter);
+			display->print('S');
+			display->setCursor(radius * sinDeg(heading - 270) + leftCenter,
+			                   radius * cosDeg(heading - 270) + verticalCompassCenter);
+			display->print('W');
+		}
+	}
+
+	// Right Half
+	{
+		const u8g2_uint_t leftCenter = displayWidth / 4 * 3;
+		if (fix.valid.location) {
+			if (ConfigurationManager::currentNav.name == "") {
+				if (ConfigurationManager::getLocationCount() > 0) {
+					// Not currently navigating
+					String distanceMessage = ConfigurationManager::getLocation(0).distanceString(fix.location) + " to";
+					display->setCursor(displayWidth / 2, titleHeight + UIFontHeight + 2);
+					display->print(distanceMessage);
+					display->setCursor(displayWidth / 2, titleHeight + UIFontHeight * 2 + 4);
+					display->print(ConfigurationManager::getLocation(0).name);
+				}
+			} else {
+				// Currently navigating
+
+
+			}
+		}
+
+		if (fix.valid.speed) {
+			String speed = String(fix.speed_mph()) + " MPH";
+			display->setCursor(leftCenter - display->getUTF8Width(speed.c_str()) / 2, displayHeight);
+			display->print(speed);
+		}
+	}
 }

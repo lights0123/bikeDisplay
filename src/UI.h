@@ -90,6 +90,8 @@ public:
 			return currentPosition;
 		}
 
+		void setPositionCount(int count);
+
 	private:
 		int positions;
 		int currentPosition = 0;

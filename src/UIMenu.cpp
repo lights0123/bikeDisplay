@@ -143,10 +143,14 @@ void Locations::buttonEvent(ButtonManager::Button b) {
 	else if (button == Button::leftPin) exit();
 	else if (button == Button::selectPin) {
 		if (Selector.getPosition() == 0) exit();
-		else {
-			Config::currentNav = Config::getLocation(Selector.getPosition() - 1);
+		else if (Selector.getPosition() == 1 && Config::currentNav) {
+			Config::currentNav.name = "";
+			Selector.setPositionCount(Config::getLocationCount()+1);
 			exit();
-			return;
+		} else {
+			Config::currentNav = Config::getLocation(Selector.getPosition() - (Config::currentNav ? 2 : 1));
+			Selector.setPositionCount(Config::getLocationCount()+2);
+			exit();
 		}
 	}
 }

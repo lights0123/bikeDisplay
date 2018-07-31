@@ -27,23 +27,27 @@ void LEDController::setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_
 	effectFunction = effectFunctionIn;
 }
 
+void LEDController::allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset, uint32_t color) {
+	for (uint16_t i = offset; i < numLEDs + offset; i++) leds->setPixelColor(i, color);
+}
+
+void LEDController::off(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
+	allColor(leds, numLEDs, offset);
+}
+
 void LEDController::blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
 	// Number of flashes (on and off) per minute
 	const int desiredFrequency = 80;
-	const uint32_t yellow = Adafruit_NeoPixel_ZeroDMA::Color(255, 255, 0);
+	const uint32_t color = Adafruit_NeoPixel_ZeroDMA::Color(255, 255, 0);
 	const int cycleTime = 1000 * 60 / desiredFrequency;
-	if (millis() % cycleTime > cycleTime / 2) allColor(leds, numLEDs, offset, yellow);
-	else allColor(leds, numLEDs);
-}
-
-void LEDController::allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset, uint32_t color) {
-	for (uint16_t i = offset; i < numLEDs + offset; i++) leds->setPixelColor(i, color);
+	if (millis() % cycleTime > cycleTime / 2) allColor(leds, numLEDs, offset, color);
+	else allColor(leds, numLEDs, offset);
 }
 
 void LEDController::rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
 	static uint8_t startIndex = 0;
 	static unsigned long lastTime = 0;
-	startIndex+=(millis() - lastTime) / 10;
+	startIndex += (millis() - lastTime) / 10;
 	lastTime = millis();
 	uint8_t colorIndex = startIndex++;
 	for (uint16_t i = offset; i < numLEDs + offset; i++) {
@@ -51,4 +55,8 @@ void LEDController::rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, u
 		leds->setPixelColor(i, color.r, color.g, color.b);
 		colorIndex += 3;
 	}
+}
+
+void LEDController::solidWhite(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset) {
+	allColor(leds, numLEDs, offset, Adafruit_NeoPixel_ZeroDMA::Color(255, 255, 255));
 }

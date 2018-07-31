@@ -66,7 +66,7 @@ protected:
 class LEDStripBriSetting : public Drawable {
 public:
 	explicit LEDStripBriSetting(UI *ui) : Drawable(ui), slider(
-			UI::UISlider(ui, "LED Strip Brightness", Config::LEDStripBrightness)) {};
+			UI::UISlider(ui, "Strip Brightness", Config::LEDStripBrightness)) {};
 
 	void enter(vl::Func<void()> exitCB) override;
 
@@ -84,7 +84,7 @@ public:
 					case 0:
 						return UI::UISelector::ListReturn();
 					case 1:
-						return UI::UISelector::ListItem("LED Strip");
+						return UI::UISelector::ListItem("Strip Brightness");
 					case 2:
 						return UI::UISelector::ListItem(Config::is24Hour ? "24 Hour" : "12 Hour");
 					default:
@@ -109,8 +109,7 @@ private:
 class Locations : public Drawable {
 public:
 	explicit Locations(UI *ui) : Drawable(ui), Selector(
-			UI::UISelector(ui, Config::getLocationCount() + 1,
-			               [](int loc) { return loc == 0 ? UI::UISelector::ListReturn() : getLocation(loc - 1); })) {};
+			UI::UISelector(ui, Config::getLocationCount() + 1, getLocation)) {};
 
 	void enter(vl::Func<void()> exitCB) override;
 
@@ -120,9 +119,16 @@ private:
 	UI::UISelector Selector;
 
 	static UI::UISelector::ListItem getLocation(int pos) {
+		if (pos == 0)return UI::UISelector::ListReturn();
+		if (Config::currentNav) {
+			if (pos == 1) return UI::UISelector::ListItem("\xD7 Cancel Nav");
+			pos--;
+		}
+		pos--;
 		const auto loc = Config::getLocation(pos);
-		return UI::UISelector::ListItem{loc.name,
-		                                Config::fix.valid.location ? loc.distanceString(Config::fix.location) : ""};
+		const bool isSelected = loc == Config::currentNav;
+		return UI::UISelector::ListItem(String(isSelected ? "\xBB" : "") + loc.name,
+		                                Config::fix.valid.location ? loc.distanceString(Config::fix.location) : "");
 	}
 };
 

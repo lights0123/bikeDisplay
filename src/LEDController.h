@@ -36,11 +36,17 @@ public:
 	void setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction);
 
 	// Effects
-	static void blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
-	static void rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
-
 	static void allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0,
 	                     uint32_t color = Adafruit_NeoPixel_ZeroDMA::Color(0, 0, 0));
+
+	static void off(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
+
+	static void blinker(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
+
+	static void rainbow(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
+
+	static void solidWhite(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0);
+
 
 private:
 	Adafruit_NeoPixel_ZeroDMA *leds;

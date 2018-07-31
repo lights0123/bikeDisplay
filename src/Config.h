@@ -60,6 +60,14 @@ namespace Config {
 			if (feet >= 100) return String(round(feet / 50) * 50) + " ft";
 			return String(round(feet / 10) * 10) + " ft";
 		}
+
+		explicit operator bool() const {
+			return name != "";
+		}
+
+		bool operator==(Location otherLocation) const {
+			return location.lat() == otherLocation.location.lat() && location.lon() == otherLocation.location.lon();
+		}
 	};
 
 	// Runtime

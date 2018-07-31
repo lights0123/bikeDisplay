@@ -21,7 +21,7 @@
 #include "Config.h"
 
 #define titleHeight 16
-#define UIFont u8g2_font_7x14_mr
+#define UIFont u8g2_font_7x14_mf
 #define UIFontHeight 10
 #define listEntries ((display->getDisplayHeight() - titleHeight) / (UIFontHeight + 2))
 
@@ -62,12 +62,12 @@ void UI::UISelector::show() {
 		}
 		display->setCursor(0, top);
 		ListItem l = cb(position);
-		if(l.isReturn){
+		if (l.isReturn) {
 			display->setFont(u8g2_font_8x13_t_symbols);
 			display->drawGlyph(0, top, 0x21a9);
 
 			display->setFont(UIFont);
-			display->setCursor(11,top);
+			display->setCursor(11, top);
 			display->print("Return");
 			return;
 		}
@@ -100,6 +100,10 @@ void UI::UISelector::moveDown() {
 		currentPosition++;
 		if (topItem <= currentPosition - listEntries) topItem++;
 	}
+}
+
+void UI::UISelector::setPositionCount(int count) {
+	positions = count;
 }
 
 UI::UISlider &UI::UISlider::setBounds(int newMin, int newMax) {

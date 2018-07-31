@@ -68,11 +68,12 @@ void SERCOM2_Handler() {
 	GPSPort.IrqHandler();
 }
 
-#define NUM_LEDS 20
+#define NUM_LEDS 40
 #define NEOPIXEL_DATA_PIN 11
 //CRGB leds[NUM_LEDS];
 Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
-LEDController e(&strip, NUM_LEDS);
+LEDController leftBlinker(&strip, 20);
+LEDController rightBlinker(&strip, 20,20);
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 UI ui(&u8g2);
@@ -89,12 +90,12 @@ void setup() {
 	//LEDS.setBrightness(84);
 	strip.begin();
 	strip.setBrightness(Config::LEDStripBrightness);
-	e.setEffect(LEDController::rainbow);
+	rightBlinker.setEffect(LEDController::blinker);
+	leftBlinker.setEffect(LEDController::rainbow);
 	ButtonManager::init();
 
 	ui.setTitle("Locations");
 	l.enter([](){});
-//	ui.setType(&l);
 	ui.show();
 }
 
@@ -121,7 +122,8 @@ void loop() {
 		hasFix = false;
 	}
 	ui.show();
-	e.show();
+	leftBlinker.show();
+	rightBlinker.show();
 	if (Config::hasTime) ui.setTitle(Time::formatTime());
 	strip.setBrightness(Config::LEDStripBrightness);
 	l.buttonEvent(ButtonManager::getButtons());

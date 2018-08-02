@@ -75,7 +75,7 @@ Adafruit_NeoPixel_ZeroDMA strip(NUM_LEDS, NEOPIXEL_DATA_PIN, NEO_GRB);
 LEDController leftBlinker(&strip, 20);
 LEDController rightBlinker(&strip, 20,20);
 
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
+U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
 UI ui(&u8g2);
 
 MainScreen l(&ui);

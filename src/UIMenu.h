@@ -126,7 +126,7 @@ private:
 		}
 		pos--;
 		const auto loc = Config::getLocation(pos);
-		const bool isSelected = loc == Config::currentNav;
+		const bool isSelected = Config::currentNav.name != "" && loc == Config::currentNav;
 		return UI::UISelector::ListItem(String(isSelected ? "\xBB" : "") + loc.name,
 		                                Config::fix.valid.location ? loc.distanceString(Config::fix.location) : "");
 	}

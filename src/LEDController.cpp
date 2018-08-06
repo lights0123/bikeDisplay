@@ -23,7 +23,7 @@ void LEDController::show() {
 	leds->show();
 }
 
-void LEDController::setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunctionIn) {
+void LEDController::setEffect(std::function<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunctionIn) {
 	effectFunction = effectFunctionIn;
 }
 

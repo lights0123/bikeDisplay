@@ -21,7 +21,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <functional-vlpp.h>
+#include <functional>
 #include "UI.h"
 #include "Config.h"
 //#include "freeRAM.h"
@@ -51,7 +51,7 @@ namespace ButtonManager {
 
 class Drawable {
 public:
-	virtual void enter(vl::Func<void()> exitCB) = 0;
+	virtual void enter(std::function<void()> exitCB) = 0;
 
 	virtual void buttonEvent(ButtonManager::Button b) = 0;
 
@@ -60,7 +60,7 @@ protected:
 
 	UI *ui;
 
-	vl::Func<void()> exit;
+	std::function<void()> exit;
 };
 
 class LEDStripBriSetting : public Drawable {
@@ -68,7 +68,7 @@ public:
 	explicit LEDStripBriSetting(UI *ui) : Drawable(ui), slider(
 			UI::UISlider(ui, "Strip Brightness", Config::LEDStripBrightness)) {};
 
-	void enter(vl::Func<void()> exitCB) override;
+	void enter(std::function<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 
@@ -92,7 +92,7 @@ public:
 				}
 			})), l(ui) {};
 
-	void enter(vl::Func<void()> exitCB) override;
+	void enter(std::function<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 
@@ -111,7 +111,7 @@ public:
 	explicit Locations(UI *ui) : Drawable(ui), Selector(
 			UI::UISelector(ui, Config::getLocationCount() + 1, getLocation)) {};
 
-	void enter(vl::Func<void()> exitCB) override;
+	void enter(std::function<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 
@@ -136,7 +136,7 @@ class MainScreen : public Drawable {
 public:
 	explicit MainScreen(UI *ui) : Drawable(ui), screen(ui), locationScreen(ui), preferencesScreen(ui) {};
 
-	void enter(vl::Func<void()> exitCB) override;
+	void enter(std::function<void()> exitCB) override;
 
 	void buttonEvent(ButtonManager::Button b) override;
 

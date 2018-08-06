@@ -17,7 +17,7 @@
 */
 #include <FastLED.h>
 #include <Adafruit_NeoPixel_ZeroDMA.h>
-#include <functional-vlpp.h>
+#include <functional>
 
 #pragma once
 
@@ -33,7 +33,7 @@ public:
 
 	void show();
 
-	void setEffect(vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction);
+	void setEffect(std::function<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction);
 
 	// Effects
 	static void allColor(Adafruit_NeoPixel_ZeroDMA *leds, uint16_t numLEDs, uint16_t offset = 0,
@@ -53,6 +53,6 @@ private:
 	uint16_t numLEDs;
 	uint16_t offset;
 
-	vl::Func<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction;
+	std::function<void(Adafruit_NeoPixel_ZeroDMA *, uint16_t, uint16_t)> effectFunction;
 };
 

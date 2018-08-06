@@ -19,7 +19,7 @@
 #pragma once
 
 #include <U8g2lib.h>
-#include <functional-vlpp.h>
+#include <functional>
 #include <GPSfix.h>
 
 enum UI_TYPES {
@@ -77,7 +77,7 @@ public:
 		 * @param positions Number of positions in the selector
 		 * @param cb A callback that is given a zero-indexed integer that returns a String of the desired output
 		 */
-		UISelector(UI *manager, int positions, vl::Func<ListItem(int)> cb) : UIType(manager),
+		UISelector(UI *manager, int positions, std::function<ListItem(int)> cb) : UIType(manager),
 		                                                                     positions(positions), cb(cb) {};
 
 		void show() override;
@@ -97,7 +97,7 @@ public:
 		int currentPosition = 0;
 		int topItem = 0;
 
-		vl::Func<ListItem(int)> cb;
+		std::function<ListItem(int)> cb;
 	};
 
 	class UIMain : public UIType {
@@ -145,7 +145,7 @@ public:
 		 * @param cbChangeNew New callback that accepts an integer
 		 * @return itself, for a fluent-style interface
 		 */
-		UISlider &onChange(vl::Func<void(int)> cbChangeNew);
+		UISlider &onChange(std::function<void(int)> cbChangeNew);
 
 		void show() override;
 
@@ -160,7 +160,7 @@ public:
 		String name;
 		String suffix = "%";
 
-		vl::Func<void(int)> cbChange;
+		std::function<void(int)> cbChange;
 
 	};
 

@@ -128,7 +128,7 @@ UI::UISlider &UI::UISlider::setSuffix(String newSuffix) {
 }
 
 
-UI::UISlider &UI::UISlider::onChange(vl::Func<void(int)> cbChangeNew) {
+UI::UISlider &UI::UISlider::onChange(std::function<void(int)> cbChangeNew) {
 	cbChange = cbChangeNew;
 	return *this;
 }

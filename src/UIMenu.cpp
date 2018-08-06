@@ -56,7 +56,7 @@ ButtonManager::ButtonPress ButtonManager::longPressHelper(Button button) {
 	return b;
 }
 
-void LEDStripBriSetting::enter(vl::Func<void()> exitCB) {
+void LEDStripBriSetting::enter(std::function<void()> exitCB) {
 	exit = exitCB;
 	slider
 			.setValue(Config::LEDStripBrightness)
@@ -84,7 +84,7 @@ void LEDStripBriSetting::buttonEvent(ButtonManager::Button b) {
 	}
 }
 
-void Preferences::enter(vl::Func<void()> exitCB) {
+void Preferences::enter(std::function<void()> exitCB) {
 	exit = exitCB;
 	ui->setType(&Selector);
 }
@@ -127,7 +127,7 @@ void Preferences::buttonEvent(ButtonManager::Button b) {
 	}
 }
 
-void Locations::enter(vl::Func<void()> exitCB) {
+void Locations::enter(std::function<void()> exitCB) {
 	exit = exitCB;
 	ui->setType(&Selector);
 }
@@ -155,7 +155,7 @@ void Locations::buttonEvent(ButtonManager::Button b) {
 	}
 }
 
-void MainScreen::enter(vl::Func<void()> exitCB) {
+void MainScreen::enter(std::function<void()> exitCB) {
 	exit = exitCB;
 	ui->setType(&screen);
 }

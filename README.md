@@ -3,8 +3,7 @@ This is a project to add a smart controller to a standard bicycle, using an Atme
 (known as Arduino Zero or Arduino M0). What it does:
 * Uses GPS for speed, heading (direction), and simple navigation
 * Uses an OLED display to display a menu
-* Controls front & back lights with both PWM and Neopixel control
-* Uses radio (NRF24L01) to communicate with additional controllers
+* Controls front & back lights with both PWM and Neopixel control for turn signals
 
 What it is not:
 * An anti-theft device (although it might work as one)
